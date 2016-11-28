@@ -1,6 +1,6 @@
 # A Repository for Competitive Programming
 
-競プロ用のリポジトリ。
+競プロ用のリポジトリ(自分用)。
 主にD言語を使ってます。
 
 - algorithms/: ライブラリ。まだあまり作ってない
