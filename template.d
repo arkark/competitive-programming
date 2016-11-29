@@ -31,5 +31,5 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-    
+
 }
