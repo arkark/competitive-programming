@@ -11,56 +11,38 @@ import std.math;
 import std.range;
 import std.container;
 import std.ascii;
-void times(alias pred)(int n) {
-    foreach(i; 0..n) pred();
+import std.traits;
+void times(alias fun)(int n) {
+    foreach(i; 0..n) fun();
 }
-auto rep(alias pred, T = typeof(pred()))(int n) {
+auto rep(alias fun, T = typeof(fun()))(int n) {
     T[] res = new T[n];
-    foreach(ref e; res) e = pred();
+    foreach(ref e; res) e = fun();
     return res;
 }
+// fold was added in D 2.071.0.
+template fold(fun...) if (fun.length >= 1) {
+    auto fold(R, S...)(R r, S seed) {
+        static if (S.length < 2) {
+            return reduce!fun(seed, r);
+        } else {
+            return reduce!fun(tuple(seed), r);
+        }
+    }
+}
 
+int MAX = 10^^6+1;
 void main() {
-  int N = readln.chomp.to!int;
-  int[] a = readln.split.to!(int[]);
-  int M = readln.chomp.to!int;
-  if (M > 1) return;
-  a ~= readln.chomp.to!int;
-  a ~= 0;
+    int N = readln.chomp.to!int;
+    int[] a = readln.split.to!(int[]);
 
-  int[] ary = new int[N];
-  int maxV = -int.max;
-  int[] index = new int[N];
-  int maxI = -1;
-  ary.back = 0;
-  for(int i=N-2; i>=0; i--) {
-    int v = a[i+2]-ary[i+1];
-    if (v > maxV) {
-      maxV = v;
-      maxI = i+2;
-      ary[i] = maxV;
-    } else {
-      ary[i] = maxV;
+    auto list = DList!int(MAX.iota);
+    iota(2, N-1).each!(i => list[].drop(1).take(a[i]).each!(v => list.insertFront(v)));
+    int[] ary = list[].array;
+    int s = a[2..$].sum;
+    int M = readln.chomp.to!int;
+    foreach(_; 0..M) {
+        int x = readln.chomp.to!int;
+        writeln((x<MAX ? ary[x] : x-s) + a[0] - a[1]);
     }
-    index[i] = maxI;
-  }
-  int i = 0; int j=0;
-  int num1, num2;
-  int po = 0;
-  while(abs(i-j)==1 && (i==N-1 || j==N-1)) {
-    if (po%2==0) {
-      num1 = ary[i];
-      num2 = a[i..index[i]-1].sum;
-      i = index[i];
-      j = i-1;
-    } else {
-      num2 = ary[j];
-      num1 = a[j..index[j]-1].sum;
-      j = index[j];
-      i = j-1;
-    }
-    po++;
-  }
-  index.writeln;
-  (num1-num2).writeln;
 }
