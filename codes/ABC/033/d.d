@@ -10,57 +10,54 @@ import std.array;
 import std.math;
 import std.range;
 import std.container;
-
-void main() {
-    int N = readln.chomp.to!int;
-    Vector[] vectors = new Vector[N];
-    foreach(i; 0..N) {
-        vectors[i] = Vector(readln.split.to!(int[]));
-    }
-
-    long[] ans = new long[3];
-    double EPS = 1e-10;
-    foreach(i, v; vectors) {
-        double[] ary = (vectors[0..i]~vectors[i+1..$]).map!(_v => atan2((_v-v).y.to!double, (_v-v).x.to!double)).array.sort;
-        ary ~= ary.front+PI*2;
-        int l = 0;
-        foreach(r; 1..N) {
-            while(l<r && ary[r]-ary[l]>PI/2-EPS) {
-                if (abs(ary[r]-ary[l]-PI/2) < EPS || abs(ary[r]-ary[l]-PI*3/2) < EPS) {
-                    ans[1]++;
-                } else if (ary[r]-ary[l]<PI*3/2+EPS) {
-                    ans[2]++;
-                }
-                l++;
-            }
+import std.ascii;
+void times(alias fun)(int n) {
+    foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(int n) {
+    T[] res = new T[n];
+    foreach(ref e; res) e = fun();
+    return res;
+}
+// fold was added in D 2.071.0.
+template fold(fun...) if (fun.length >= 1) {
+    auto fold(R, S...)(R r, S seed) {
+        static if (S.length < 2) {
+            return reduce!fun(seed, r);
+        } else {
+            return reduce!fun(tuple(seed), r);
         }
     }
-    ans[0] = N*(N-1)*(N-2)/6-ans[1]-ans[2];
-    ans.to!(string[]).reduce!((a, b) => a~" "~b).writeln;
 }
 
-struct Vector {
+double EPS = 1e-10;
+void main() {
+    int N = readln.chomp.to!int;
+    Vertex[] vs = N.rep!(() => readln.split.to!(int[]).pipe!(a => Vertex(a.front, a.back))).array;
+    long[] ans = [0, 0, 0]; // 鋭角、直角、鈍角
+    foreach(o; vs) {
+        auto ary = vs.filter!(v => v!=o).map!(v => v-o).map!(v => v.angle).array.sort().pipe!(a => a.array ~ a.map!(b => b+2.0*PI).array.to!(double[])).assumeSorted;
+        ans[1] += ary[0..$/2].map!(a =>
+            ary.length.to!int
+             - ary.upperBound(a+PI/2.0+EPS).length.to!int
+             - ary.lowerBound(a+PI/2.0-EPS).length.to!int
+        ).sum;
+        ans[2] += ary[0..$/2].map!(a =>
+            ary.length.to!int
+             - ary.upperBound(a+PI+EPS).length.to!int
+             - ary.lowerBound(a+PI/2.0+EPS).length.to!int
+        ).sum;
+    }
+    ans[0] = N.to!long*(N-1)*(N-2)/6 - ans[1] - ans[2];
+    ans.to!(string[]).join(" ").writeln;
+}
+
+struct Vertex{
     int x, y;
-    this(int[] r) {
-        this(r[0], r[1]);
+    double angle() {
+        return atan2(y.to!double, x.to!double);
     }
-    this(int x, int y) {
-        this.x = x;
-        this.y = y;
+    Vertex opBinary(string op)(Vertex that) {
+        mixin("return Vertex(this.x"~op~"that.x, this.y"~op~"that.y);");
     }
-    Vector opBinary(string op)(Vector rhs) {
-        mixin("return Vector(this.x"~op~"rhs.x, this.y"~op~"rhs.y);");
-    }
-}
-int dot(Vector v1, Vector v2) {
-    return v1.x*v2.x + v1.y*v2.y;
-}
-int cross(Vector v1, Vector v2) {
-    return v1.x*v2.y - v1.y*v2.x;
-}
-double size(Vector v) {
-    return sqrt((v.x^^2 + v.y^^2).to!double);
-}
-double dist(Vector v1, Vector v2) {
-    return size(v1-v2);
 }
