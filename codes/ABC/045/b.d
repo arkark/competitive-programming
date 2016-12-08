@@ -31,5 +31,13 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    3.rep!(() => readln.chomp.map!(c => c-'a').pipe!(str => DList!int(str))).pipe!((ary) {
+        int now = 0;
+        while(!ary[now].empty) {
+            int tmp = ary[now].front;
+            ary[now].removeFront;
+            now = tmp;
+        }
+        return now;
+    }).pipe!(i => "ABC"[i]).writeln;
 }

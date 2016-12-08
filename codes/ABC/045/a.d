@@ -31,5 +31,7 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    int a, b, h;
+    readf("%d\n%d\n%d\n", &a, &b, &h);
+    writeln((a+b)*h/2);
 }
