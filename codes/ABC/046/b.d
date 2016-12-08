@@ -31,5 +31,7 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    long N, K;
+    readf("%d %d\n", &N, &K);
+    writeln(K*(K-1)^^(N-1));
 }
