@@ -31,5 +31,8 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    long a, b, x;
+    readf("%d %d %d\n", &a, &b, &x);
+    auto f = (long y) => (y+x)/x;
+    writeln(f(b)-f(a-1));
 }
