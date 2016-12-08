@@ -31,5 +31,39 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    int W, H, N;
+    readf("%d %d %d\n", &W, &H, &N);
+    int[][] grid = new int[][](W+1, H+1);
+    N.times!({
+        int x, y, a;
+        readf("%d %d %d\n", &x, &y, &a);
+        a==1 ? {
+            grid[0][0]++;
+            grid[x][0]--;
+            grid[0][H]--;
+            grid[x][H]++;
+        }() : a==2 ? {
+            grid[x][0]++;
+            grid[W][0]--;
+            grid[x][H]--;
+            grid[W][H]++;
+        }() : a==3 ? {
+            grid[0][0]++;
+            grid[W][0]--;
+            grid[0][y]--;
+            grid[W][y]++;
+        }() : {
+            grid[0][y]++;
+            grid[W][y]--;
+            grid[0][H]--;
+            grid[W][H]++;
+        }();
+    });
+    foreach(i; 0..W) foreach(j; 1..H) {
+        grid[i][j] += grid[i][j-1];
+    }
+    foreach(i; 1..W) foreach(j; 0..H) {
+        grid[i][j] += grid[i-1][j];
+    }
+    grid[0..$-1].map!"a[0..$-1]".join.count!"a==0".writeln;
 }

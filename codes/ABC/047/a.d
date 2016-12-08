@@ -31,5 +31,5 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    readln.split.to!(int[]).sort().pipe!"a[0]+a[1]==a[2]".pipe!(a => a?"Yes":"No").writeln;
 }
