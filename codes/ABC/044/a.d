@@ -31,5 +31,7 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    int N, K, X, Y;
+    readf("%d\n%d\n%d\n%d\n", &N, &K, &X, &Y);
+    writeln(X*min(K, N) + Y*max(0, N-K));
 }

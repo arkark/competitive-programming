@@ -31,5 +31,5 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    readln.chomp.to!(dchar[]).sort().group.all!"a[1]%2==0".pipe!(a => a?"Yes":"No").writeln;
 }
