@@ -11,7 +11,6 @@ import std.math;
 import std.range;
 import std.container;
 import std.ascii;
-import std.concurrency;
 void times(alias fun)(int n) {
     foreach(i; 0..n) fun();
 }
@@ -32,5 +31,5 @@ template fold(fun...) if (fun.length >= 1) {
 }
 
 void main() {
-
+    readln.chomp.uniq.array.length.pipe!"a-1".writeln;
 }

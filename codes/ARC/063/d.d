@@ -31,6 +31,20 @@ template fold(fun...) if (fun.length >= 1) {
     }
 }
 
+long INF = long.max/3;
 void main() {
+    int N, T;
+    readf("%d %d\n", &N, &T);
+
+    (new std.concurrency.Generator!long({
+        long[] A = readln.split.to!(long[]);
+        long m = INF;
+        foreach(i; 0..N) {
+            (A[i]-m).yield;
+            m = min(m, A[i]);
+        }
+    })).take(N).array.pipe!(ary =>
+        ary.count(ary.reduce!max)
+    ).writeln;
 
 }
