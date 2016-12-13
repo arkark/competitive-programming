@@ -11,18 +11,28 @@ import std.math;
 import std.range;
 import std.container;
 import std.ascii;
-import std.datetime;
-void times(int n, void delegate() pred) {
-    foreach(i; 0..n) pred();
+import std.concurrency;
+void times(alias fun)(int n) {
+    foreach(i; 0..n) fun();
 }
-T[] rep(T)(int n, T delegate() pred) {
+auto rep(alias fun, T = typeof(fun()))(int n) {
     T[] res = new T[n];
-    foreach(ref e; res) e = pred();
+    foreach(ref e; res) e = fun();
     return res;
+}
+// fold was added in D 2.071.0.
+template fold(fun...) if (fun.length >= 1) {
+    auto fold(R, S...)(R r, S seed) {
+        static if (S.length < 2) {
+            return reduce!fun(seed, r);
+        } else {
+            return reduce!fun(tuple(seed), r);
+        }
+    }
 }
 
 void main() {
     long N, X;
-    readf("%d %d", &N, &X);
-
+    readf("%d %d\n", &N, &X);
+    writeln(3*(N-gcd(N, X)));
 }
