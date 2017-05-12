@@ -10,8 +10,8 @@ void main() {
     ary2[10].writeln();
 }
 
-bool[] getIsPrimes(int max) {
-    bool[] isPrimes = new bool[max+1];
+bool[] getIsPrimes(int limit) {
+    bool[] isPrimes = new bool[limit+1];
     isPrimes[2..$] = true;
     for (int i=2; i*i<=isPrimes.length; i++) {
         if (isPrimes[i]) {
@@ -23,8 +23,8 @@ bool[] getIsPrimes(int max) {
     return isPrimes;
 }
 
-int[] getPrimes(int max) {
-    bool[] isPrimes = new bool[max+1];
+int[] getPrimes(int limit) {
+    bool[] isPrimes = new bool[limit+1];
     isPrimes[2..$] = true;
     for (int i=2; i*i<=isPrimes.length; i++) {
         if (isPrimes[i]) {
