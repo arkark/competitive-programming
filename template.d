@@ -12,6 +12,14 @@ import std.range;
 import std.container;
 import std.ascii;
 import std.concurrency;
+
+void main() {
+
+}
+
+
+
+// -------------------------------------------
 void times(alias fun)(int n) {
     foreach(i; 0..n) fun();
 }
@@ -20,17 +28,16 @@ auto rep(alias fun, T = typeof(fun()))(int n) {
     foreach(ref e; res) e = fun();
     return res;
 }
+
 // fold was added in D 2.071.0.
-template fold(fun...) if (fun.length >= 1) {
-    auto fold(R, S...)(R r, S seed) {
-        static if (S.length < 2) {
-            return reduce!fun(seed, r);
-        } else {
-            return reduce!fun(tuple(seed), r);
+static if (__VERSION__ < 2071) {
+    template fold(fun...) if (fun.length >= 1) {
+        auto fold(R, S...)(R r, S seed) {
+            static if (S.length < 2) {
+                return reduce!fun(seed, r);
+            } else {
+                return reduce!fun(tuple(seed), r);
+            }
         }
     }
-}
-
-void main() {
-
 }
