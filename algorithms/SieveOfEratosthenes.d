@@ -34,7 +34,7 @@ int[] getPrimes(int limit) {
         }
     }
     int[] primes = [];
-    foreach (i, flg; isPrimes) {
+    foreach (int i, flg; isPrimes) {
         if (flg) primes ~= i;
     }
     return primes;
