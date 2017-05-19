@@ -27,17 +27,17 @@ void main() {
             i => [i%2==0, i/2==0]
         ).find!(
             seed => ary.fold!(
-                (a, b) => [a[1], a[0]^a[1]^b]
+                (a, b) => [a.back, a.front^a.back^b]
             )(seed).equal(seed)
-        ).pipe!(
-            res => res.empty ? "-1" : res.front.pipe!(
-                seed => ary.cumulativeFold!(
-                    (a, b) => [a[1], a[0]^a[1]^b]
-                )(seed).map!(a => a[0])
-            ).map!"a?'W':'S'".array
-        )
-    ).writeln;
-
+        ).fold!(
+            (flg, seed) => flg && (
+                ary.cumulativeFold!(
+                    (a, b) => [a.back, a.front^a.back^b]
+                )(seed).map!front.map!"a?'W':'S'".array.writeln,
+                false
+            )
+        )(true)
+    ) && "-1".writeln;
 }
 
 // ----------------------------------------------
