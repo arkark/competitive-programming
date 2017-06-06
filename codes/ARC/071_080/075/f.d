@@ -21,105 +21,31 @@ auto rep(alias fun, T = typeof(fun()))(int n) {
     return res;
 }
 
-void main() {
-    int N; long K;
-    readf("%d %d\n", &N, &K);
-    long[] as = N.rep!(() => readln.chomp.to!long);
-
-    long[] bs = new long[N+1];
-    foreach(i; 0..N) {
-        bs[i+1] = bs[i]+as[i]-K;
-    }
-
-    // 転倒数
-    
-    size_t[long] aa;
-    bs.dup.sort!"a<b".uniq.enumerate.each!(a => aa[a.value] = a.index);
-
-    size_t[] cs = bs.map!(b => aa[b]).array;
-
-    auto tree = SegTree!(long, (a, b) => a+b, 0L)(N+1);
-    N.iota.map!((i) {
-        tree.update(cs[i], tree.query(cs[i], cs[i]+1) + 1);
-        return tree.query(0, cs[i+1]+1);
-    }).sum.writeln;
+long rec(int depth, long D, long repunit) {
+    if (repunit == 0) return D==0 ? 1 : 0;
+    long d = D%10;
+    long a = depth==0?1:0;
+    return (10-d.abs-a) * rec(depth+1, (D-repunit*d)/10, repunit/100);
 }
 
-// SegTree (Segment Tree)
-struct SegTree(T, alias fun, T initValue)
-    if (is(typeof(fun(T.init, T.init)) : T)) {
+void main() {
+    long D = readln.chomp.to!long;
 
-private:
-    T[] _data;
-    size_t _size;
-    size_t _l, _r;
-
-public:
-    // size ... データ数
-    // initValue ... 初期値(例えばRMQだとINF)
-    this(size_t size) {
-        init(size);
+    if (D%9 != 0) {
+        0.writeln;
+        return;
     }
+    D /= 9;
 
-    // 配列で指定
-    this(T[] ary) {
-        init(ary.length);
-        update(ary);
+    long ans = 0;
+    long repunit = 1;
+    foreach(i; 2..18+1) {
+        long a = i%2==1 ? 10:1;
+        ans += a * rec(0, D, repunit);
+        repunit = repunit*10 + 1;
     }
+    ans.writeln;
 
-    // O(N)
-    void init(size_t size){
-        _size = 1;
-        while(_size < size) {
-            _size *= 2;
-        }
-        _data.length = _size*2-1;
-        _data[] = initValue;
-        _l = 0;
-        _r = size;
-    }
-
-    // i番目の要素をxに変更
-    // O(logN)
-    void update(size_t i, T x) {
-        i += _size-1;
-        _data[i] = x;
-        while(i>0) {
-            i = (i-1)/2;
-            _data[i] = fun(_data[i*2+1], _data[i*2+2]);
-        }
-    }
-
-    // 配列で指定
-    // o(N)
-    void update(T[] ary) {
-        foreach(size_t i, e; ary) {
-            size_t _i = i+_size-1;
-            _data[_i] = e;
-        }
-        foreach(i; 0.._size-1) {
-            size_t _i = _size-i-2;
-            _data[_i] = fun(_data[_i*2+1], _data[_i*2+2]);
-        }
-    }
-
-    // 区間[a, b)でのクエリ
-    // O(logN)
-    T query(size_t a, size_t b) {
-        T rec(size_t a, size_t b, size_t k, size_t l, size_t r) {
-            if (b<=l || r<=a) return initValue;
-            if (a<=l && r<=b) return _data[k];
-            T vl = rec(a, b, k*2+1, l, (l+r)/2);
-            T vr = rec(a, b, k*2+2, (l+r)/2, r);
-            return fun(vl, vr);
-        }
-        return rec(a, b, 0, 0, _size);
-    }
-
-    // O(N)
-    T[] array() {
-        return _data[_l+_size-1.._r+_size-1];
-    }
 }
 
 // ----------------------------------------------
