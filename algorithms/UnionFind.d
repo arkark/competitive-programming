@@ -1,6 +1,5 @@
-// 互いに素な集合
-// UnionFindTreeによる実装
-struct DisjointSet {
+
+struct UnionFind {
 
 private:
     Vertex[] _vertices;
