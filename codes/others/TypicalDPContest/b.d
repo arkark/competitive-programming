@@ -10,27 +10,217 @@ import std.array;
 import std.math;
 import std.range;
 import std.container;
+import std.ascii;
+import std.concurrency;
+void times(alias fun)(int n) {
+    foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(int n) {
+    T[] res = new T[n];
+    foreach(ref e; res) e = fun();
+    return res;
+}
 
+long INF = long.max/3;
 void main() {
-    int[] input = readln.split.to!(int[]);
-    int A = input[0];
-    int B = input[1];
-    int[] a = readln.split.to!(int[]);
-    int[] b = readln.split.to!(int[]);
+    int A, B;
+    readf("%d %d\n", &A, &B);
+    int[] as = readln.split.to!(int[]).retro.array;
+    int[] bs = readln.split.to!(int[]).retro.array;
 
-    int[][] dp = new int[][](A+1, B+1);
-    foreach(i; 1..A+B+1) {
-        foreach(x; 0..i+1) {
-            auto y = i-x;
-            if (x>A || y>B) continue;
-            if (x==0) {
-                dp[x][y] = (A+B+i)%2 ? dp[x][y-1] : dp[x][y-1]+b[$-y];
-            } else if (y==0) {
-                dp[x][y] = (A+B+i)%2 ? dp[x-1][y] : dp[x-1][y]+a[$-x];
-            } else {
-                dp[x][y] = (A+B+i)%2 ? min(dp[x-1][y], dp[x][y-1]) : max(dp[x-1][y]+a[$-x], dp[x][y-1]+b[$-y]);
+    long[][][] dp = (A+1).rep!(() => (B+1).rep!(() => 2.rep!(() => -INF)));
+    dp[0][0][0] = 0;
+    dp[0][0][1] = 0;
+
+    // negamax
+    long[] y = new long[2];
+    foreach(i; 0..A+1) {
+        foreach(j; 0..B+1) {
+            bool flag = (A-B-i-j)%2==0;
+            long[] x = dp[i][j];
+            if (i>0) {
+                y[0] = -dp[i-1][j][0] + as[i-1];
+                y[1] =  dp[i-1][j][1] + as[i-1]*(flag?1:0);
+                if (y[0] > x[0]) x[] = y[];
+            }
+            if (j>0) {
+                y[0] = -dp[i][j-1][0] + bs[j-1];
+                y[1] =  dp[i][j-1][1] + bs[j-1]*(flag?1:0);
+                if (y[0] > x[0]) x[] = y[];
             }
         }
     }
-    dp[A][B].writeln;
+    dp[A][B][1].writeln;
+}
+
+// ----------------------------------------------
+
+// fold was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+    template fold(fun...) if (fun.length >= 1) {
+        auto fold(R, S...)(R r, S seed) {
+            static if (S.length < 2) {
+                return reduce!fun(seed, r);
+            } else {
+                return reduce!fun(tuple(seed), r);
+            }
+        }
+    }
+}
+
+// cumulativeFold was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    template cumulativeFold(fun...)
+    if (fun.length >= 1)
+    {
+        import std.meta : staticMap;
+        private alias binfuns = staticMap!(binaryFun, fun);
+
+        auto cumulativeFold(R)(R range)
+        if (isInputRange!(Unqual!R))
+        {
+            return cumulativeFoldImpl(range);
+        }
+
+        auto cumulativeFold(R, S)(R range, S seed)
+        if (isInputRange!(Unqual!R))
+        {
+            static if (fun.length == 1)
+                return cumulativeFoldImpl(range, seed);
+            else
+                return cumulativeFoldImpl(range, seed.expand);
+        }
+
+        private auto cumulativeFoldImpl(R, Args...)(R range, ref Args args)
+        {
+            import std.algorithm.internal : algoFormat;
+
+            static assert(Args.length == 0 || Args.length == fun.length,
+                algoFormat("Seed %s does not have the correct amount of fields (should be %s)",
+                    Args.stringof, fun.length));
+
+            static if (args.length)
+                alias State = staticMap!(Unqual, Args);
+            else
+                alias State = staticMap!(ReduceSeedType!(ElementType!R), binfuns);
+
+            foreach (i, f; binfuns)
+            {
+                static assert(!__traits(compiles, f(args[i], e)) || __traits(compiles,
+                        { args[i] = f(args[i], e); }()),
+                    algoFormat("Incompatible function/seed/element: %s/%s/%s",
+                        fullyQualifiedName!f, Args[i].stringof, E.stringof));
+            }
+
+            static struct Result
+            {
+            private:
+                R source;
+                State state;
+
+                this(R range, ref Args args)
+                {
+                    source = range;
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                    {
+                        static if (args.length)
+                            state[i] = f(args[i], source.front);
+                        else
+                            state[i] = source.front;
+                    }
+                }
+
+            public:
+                @property bool empty()
+                {
+                    return source.empty;
+                }
+
+                @property auto front()
+                {
+                    assert(!empty, "Attempting to fetch the front of an empty cumulativeFold.");
+                    static if (fun.length > 1)
+                    {
+                        import std.typecons : tuple;
+                        return tuple(state);
+                    }
+                    else
+                    {
+                        return state[0];
+                    }
+                }
+
+                void popFront()
+                {
+                    assert(!empty, "Attempting to popFront an empty cumulativeFold.");
+                    source.popFront;
+
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                        state[i] = f(state[i], source.front);
+                }
+
+                static if (isForwardRange!R)
+                {
+                    @property auto save()
+                    {
+                        auto result = this;
+                        result.source = source.save;
+                        return result;
+                    }
+                }
+
+                static if (hasLength!R)
+                {
+                    @property size_t length()
+                    {
+                        return source.length;
+                    }
+                }
+            }
+
+            return Result(range, args);
+        }
+    }
+}
+
+// minElement/maxElement was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    auto minElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto minimum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b < minimum) {
+                element = a;
+                minimum = b;
+            }
+        }
+        return element;
+    }
+    auto maxElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto maximum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b > maximum) {
+                element = a;
+                maximum = b;
+            }
+        }
+        return element;
+    }
 }

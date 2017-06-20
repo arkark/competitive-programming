@@ -10,22 +10,212 @@ import std.array;
 import std.math;
 import std.range;
 import std.container;
+import std.ascii;
+import std.concurrency;
+void times(alias fun)(int n) {
+    foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(int n) {
+    T[] res = new T[n];
+    foreach(ref e; res) e = fun();
+    return res;
+}
 
+long MOD = 10L^^9+7;
+void add(ref long x, long y) {
+    x = (x + y) % MOD;
+}
 void main() {
-    long MOD = 1000000007;
-    int D = readln.chomp.to!int;
-    int[] N = readln.chomp.to!(char[]).map!(a=>a-'0').array.to!(int[]);
+    int D;
+    readf("%d\n", &D);
+    int[] ns = readln.chomp.map!(a => a.to!string.to!int).array;
 
-    long[][][] dp = new long[][][](N.length+1, D, 2);
+    int N = ns.length.to!int;
+    long[][][] dp = new long[][][](N+1, D, 2);
+
     dp[0][0][1] = 1;
-    foreach(i; 0..N.length) foreach(j; 0..D) foreach(k; 0..2) {
-        foreach(l; 0..(k==1 ? N[i]+1:10)) {
-            if (k==1 && l==N[i]) {
-                dp[i+1][(j+l)%D][1] = (dp[i+1][(j+l)%D][1]+dp[i][j][k])%MOD;
+    foreach(i; 0..N) {
+        foreach(j; 0..D) {
+            foreach(k; 0..10) {
+                dp[i+1][(j+k)%D][0].add(dp[i][j][0]);
+            }
+            foreach(k; 0..ns[i]) {
+                dp[i+1][(j+k)%D][0].add(dp[i][j][1]);
+            }
+            dp[i+1][(j+ns[i])%D][1].add(dp[i][j][1]);
+        }
+    }
+    writeln((dp[N][0][0] + dp[N][0][1] - 1) % MOD); // -1は「0を除く」ため
+}
+
+// ----------------------------------------------
+
+// fold was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+    template fold(fun...) if (fun.length >= 1) {
+        auto fold(R, S...)(R r, S seed) {
+            static if (S.length < 2) {
+                return reduce!fun(seed, r);
             } else {
-                dp[i+1][(j+l)%D][0] = (dp[i+1][(j+l)%D][0]+dp[i][j][k])%MOD;
+                return reduce!fun(tuple(seed), r);
             }
         }
     }
-    (dp[N.length][0].reduce!("a+b")-1).writeln;
+}
+
+// cumulativeFold was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    template cumulativeFold(fun...)
+    if (fun.length >= 1)
+    {
+        import std.meta : staticMap;
+        private alias binfuns = staticMap!(binaryFun, fun);
+
+        auto cumulativeFold(R)(R range)
+        if (isInputRange!(Unqual!R))
+        {
+            return cumulativeFoldImpl(range);
+        }
+
+        auto cumulativeFold(R, S)(R range, S seed)
+        if (isInputRange!(Unqual!R))
+        {
+            static if (fun.length == 1)
+                return cumulativeFoldImpl(range, seed);
+            else
+                return cumulativeFoldImpl(range, seed.expand);
+        }
+
+        private auto cumulativeFoldImpl(R, Args...)(R range, ref Args args)
+        {
+            import std.algorithm.internal : algoFormat;
+
+            static assert(Args.length == 0 || Args.length == fun.length,
+                algoFormat("Seed %s does not have the correct amount of fields (should be %s)",
+                    Args.stringof, fun.length));
+
+            static if (args.length)
+                alias State = staticMap!(Unqual, Args);
+            else
+                alias State = staticMap!(ReduceSeedType!(ElementType!R), binfuns);
+
+            foreach (i, f; binfuns)
+            {
+                static assert(!__traits(compiles, f(args[i], e)) || __traits(compiles,
+                        { args[i] = f(args[i], e); }()),
+                    algoFormat("Incompatible function/seed/element: %s/%s/%s",
+                        fullyQualifiedName!f, Args[i].stringof, E.stringof));
+            }
+
+            static struct Result
+            {
+            private:
+                R source;
+                State state;
+
+                this(R range, ref Args args)
+                {
+                    source = range;
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                    {
+                        static if (args.length)
+                            state[i] = f(args[i], source.front);
+                        else
+                            state[i] = source.front;
+                    }
+                }
+
+            public:
+                @property bool empty()
+                {
+                    return source.empty;
+                }
+
+                @property auto front()
+                {
+                    assert(!empty, "Attempting to fetch the front of an empty cumulativeFold.");
+                    static if (fun.length > 1)
+                    {
+                        import std.typecons : tuple;
+                        return tuple(state);
+                    }
+                    else
+                    {
+                        return state[0];
+                    }
+                }
+
+                void popFront()
+                {
+                    assert(!empty, "Attempting to popFront an empty cumulativeFold.");
+                    source.popFront;
+
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                        state[i] = f(state[i], source.front);
+                }
+
+                static if (isForwardRange!R)
+                {
+                    @property auto save()
+                    {
+                        auto result = this;
+                        result.source = source.save;
+                        return result;
+                    }
+                }
+
+                static if (hasLength!R)
+                {
+                    @property size_t length()
+                    {
+                        return source.length;
+                    }
+                }
+            }
+
+            return Result(range, args);
+        }
+    }
+}
+
+// minElement/maxElement was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    auto minElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto minimum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b < minimum) {
+                element = a;
+                minimum = b;
+            }
+        }
+        return element;
+    }
+    auto maxElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto maximum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b > maximum) {
+                element = a;
+                maximum = b;
+            }
+        }
+        return element;
+    }
 }

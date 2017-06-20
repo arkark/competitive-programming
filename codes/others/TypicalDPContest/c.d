@@ -10,28 +10,219 @@ import std.array;
 import std.math;
 import std.range;
 import std.container;
+import std.ascii;
+import std.concurrency;
+void times(alias fun)(int n) {
+    foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(int n) {
+    T[] res = new T[n];
+    foreach(ref e; res) e = fun();
+    return res;
+}
 
 void main() {
     int K = readln.chomp.to!int;
-    int[] R = new int[2^^K];
-    foreach(ref e; R) e = readln.chomp.to!int;
-    double[][] dp = new double[][](K+1, 2^^K);
-    foreach(ref e; dp) e[] = 0.0;
-    dp[0][] = 1.0;
-    foreach(i; 0..K) {
-        foreach(j; 0..2^^(K-i-1)) {
-            foreach(k; 0..2^^(i)) foreach(l; 2^^(i)..2^^(i+1)) {
-                int _k = j*2^^(i+1)+k;
-                int _l = j*2^^(i+1)+l;
-                dp[i+1][_k] += dp[i][_k]*dp[i][_l]*getProbability(R[_k], R[_l]);
-                dp[i+1][_l] += dp[i][_l]*dp[i][_k]*getProbability(R[_l], R[_k]);
+    double[] rs = (2^^K).rep!(() => readln.chomp.to!double);
+    double[][] dp = (2*2^^K-1).rep!(() => (2^^K).rep!(() => 0.0));
+
+    double f(double p, double q) {
+        return 1.0 / (1.0 + 10.0^^((q-p)/400.0));
+    }
+
+    foreach(depth; (K+1).iota.retro) {
+        auto i = (1<<depth)-1;
+        foreach(j; 0..(1<<depth)) {
+            double[] as = dp[i+j];
+            if (depth == K) {
+                as[j] = 1.0;
+            } else {
+                double[] bs = dp[((i+j)<<1)+1];
+                double[] cs = dp[((i+j)<<1)+2];
+                auto d = 1<<(K-depth-1);
+                foreach(x; d*(2*j+0)..d*(2*j+1)) foreach(y; d*(2*j+1)..d*(2*j+2)) {
+                    double t = f(rs[x], rs[y]);
+                    as[x] += t*bs[x]*cs[y];
+                    as[y] += (1.0-t)*bs[x]*cs[y];
+                }
             }
         }
     }
-    foreach(i; 0..2^^K) {
-        writefln("%.7f", dp[$-1][i]);
+
+    dp[0].each!(
+        x => writefln("%0.7f", x)
+    );
+}
+
+
+// ----------------------------------------------
+
+// fold was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+    template fold(fun...) if (fun.length >= 1) {
+        auto fold(R, S...)(R r, S seed) {
+            static if (S.length < 2) {
+                return reduce!fun(seed, r);
+            } else {
+                return reduce!fun(tuple(seed), r);
+            }
+        }
     }
 }
-double getProbability(int p, int q) {
-    return 1.0/(1.0 + 10.0^^((q-p)/400.0));
+
+// cumulativeFold was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    template cumulativeFold(fun...)
+    if (fun.length >= 1)
+    {
+        import std.meta : staticMap;
+        private alias binfuns = staticMap!(binaryFun, fun);
+
+        auto cumulativeFold(R)(R range)
+        if (isInputRange!(Unqual!R))
+        {
+            return cumulativeFoldImpl(range);
+        }
+
+        auto cumulativeFold(R, S)(R range, S seed)
+        if (isInputRange!(Unqual!R))
+        {
+            static if (fun.length == 1)
+                return cumulativeFoldImpl(range, seed);
+            else
+                return cumulativeFoldImpl(range, seed.expand);
+        }
+
+        private auto cumulativeFoldImpl(R, Args...)(R range, ref Args args)
+        {
+            import std.algorithm.internal : algoFormat;
+
+            static assert(Args.length == 0 || Args.length == fun.length,
+                algoFormat("Seed %s does not have the correct amount of fields (should be %s)",
+                    Args.stringof, fun.length));
+
+            static if (args.length)
+                alias State = staticMap!(Unqual, Args);
+            else
+                alias State = staticMap!(ReduceSeedType!(ElementType!R), binfuns);
+
+            foreach (i, f; binfuns)
+            {
+                static assert(!__traits(compiles, f(args[i], e)) || __traits(compiles,
+                        { args[i] = f(args[i], e); }()),
+                    algoFormat("Incompatible function/seed/element: %s/%s/%s",
+                        fullyQualifiedName!f, Args[i].stringof, E.stringof));
+            }
+
+            static struct Result
+            {
+            private:
+                R source;
+                State state;
+
+                this(R range, ref Args args)
+                {
+                    source = range;
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                    {
+                        static if (args.length)
+                            state[i] = f(args[i], source.front);
+                        else
+                            state[i] = source.front;
+                    }
+                }
+
+            public:
+                @property bool empty()
+                {
+                    return source.empty;
+                }
+
+                @property auto front()
+                {
+                    assert(!empty, "Attempting to fetch the front of an empty cumulativeFold.");
+                    static if (fun.length > 1)
+                    {
+                        import std.typecons : tuple;
+                        return tuple(state);
+                    }
+                    else
+                    {
+                        return state[0];
+                    }
+                }
+
+                void popFront()
+                {
+                    assert(!empty, "Attempting to popFront an empty cumulativeFold.");
+                    source.popFront;
+
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                        state[i] = f(state[i], source.front);
+                }
+
+                static if (isForwardRange!R)
+                {
+                    @property auto save()
+                    {
+                        auto result = this;
+                        result.source = source.save;
+                        return result;
+                    }
+                }
+
+                static if (hasLength!R)
+                {
+                    @property size_t length()
+                    {
+                        return source.length;
+                    }
+                }
+            }
+
+            return Result(range, args);
+        }
+    }
+}
+
+// minElement/maxElement was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    auto minElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto minimum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b < minimum) {
+                element = a;
+                minimum = b;
+            }
+        }
+        return element;
+    }
+    auto maxElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto maximum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b > maximum) {
+                element = a;
+                maximum = b;
+            }
+        }
+        return element;
+    }
 }
