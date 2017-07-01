@@ -12,8 +12,13 @@ struct ModNum(T, T mod) if (__traits(isIntegral, T)) {
     typeof(this) opBinary(string op, S)(S that) if (op == "^^" && __traits(isIntegral, S)) {
         return typeof(this)(modPow(this.value, that));
     }
+    void opOpAssign(string op)(typeof(this) that) if (op=="+" || op=="-" || op=="*" || op=="/") {
+        mixin("this = this" ~op~ "that;");
+    }
     typeof(this) getReciprocal(typeof(this) x) in {
-        assert(isPrime(mod));
+        debug {
+            assert(isPrime(mod));
+        }
     } body {
         return typeof(this)(modPow(x.value, mod-2));
     }
