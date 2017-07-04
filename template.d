@@ -13,9 +13,11 @@ import std.container;
 import std.ascii;
 import std.concurrency;
 void times(alias fun)(int n) {
+    // n.iota.each!(i => fun());
     foreach(i; 0..n) fun();
 }
 auto rep(alias fun, T = typeof(fun()))(int n) {
+    // return n.iota.map!(i => fun()).array;
     T[] res = new T[n];
     foreach(ref e; res) e = fun();
     return res;
