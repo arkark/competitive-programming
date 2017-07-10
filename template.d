@@ -12,6 +12,13 @@ import std.range;
 import std.container;
 import std.ascii;
 import std.concurrency;
+
+void main() {
+
+}
+
+// ----------------------------------------------
+
 void times(alias fun)(int n) {
     // n.iota.each!(i => fun());
     foreach(i; 0..n) fun();
@@ -22,11 +29,6 @@ auto rep(alias fun, T = typeof(fun()))(int n) {
     foreach(ref e; res) e = fun();
     return res;
 }
-void main() {
-
-}
-
-// ----------------------------------------------
 
 // fold was added in D 2.071.0
 static if (__VERSION__ < 2071) {
