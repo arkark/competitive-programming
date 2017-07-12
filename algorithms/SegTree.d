@@ -47,7 +47,7 @@ public:
     }
 
     // 配列で指定
-    // o(N)
+    // O(N)
     void update(T[] ary) {
         foreach(size_t i, e; ary) {
             size_t _i = i+_size-1;
