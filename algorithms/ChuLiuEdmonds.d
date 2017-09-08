@@ -30,6 +30,8 @@ public:
     // O(V(V + E)) = O(VE)
     T solve() {
         foreach(v; _vertices) {
+            v.onCycle = false;
+            v.isVisited = false;
             if (!v.hasEdge) continue;
             v.minEdge = v.edges.minElement!"a.weight";
         }
