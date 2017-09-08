@@ -37,7 +37,7 @@ public:
         }
 
         // v を含む閉路を縮約したグラフの最小コストを返す
-        auto rec(Vertex v) {
+        T rec(Vertex v) {
             auto sub = new ChuLiuEdmonds!T(_size, _root.index);
             auto getIndex  = (Vertex u) => u.onCycle ? v.index : u.index;
             foreach(u; _vertices) {
@@ -93,8 +93,8 @@ private:
         size_t index;
         Edge[] edges; // assert(edges.all!(e => e.end is this))
         Edge minEdge;
-        bool onCycle = false;
-        bool isVisited = false;
+        bool onCycle;
+        bool isVisited;
         this(size_t index) {
             this.index = index;
         }
