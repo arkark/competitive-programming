@@ -76,29 +76,34 @@ public:
         }
 
         // 閉路検出
+        auto list = DList!Vertex();
+        size_t[] cnt = new size_t[_size];
         foreach(v; _vertices) {
-            if (v.isVisited) continue;
-            if (!v.hasEdge) continue;
-
-            Vertex u1 = v;
-            Vertex u2 = v.minEdge.start;
-            while(true) {
-                u1.isVisited = true;
-                u2.isVisited = true;
-                if (u1 is _root) break;
-                if (u2 is _root) break;
-                if (u1 is u2) {
-                    // 閉路が検出された
-                    do {
-                        u1.onCycle = true;
-                        u1 = u1.minEdge.start;
-                    } while(u1 !is u2);
-                    return rec(u1) + _vertices.filter!"a.onCycle".map!"a.minEdge.weight".sum;
+            if (v.hasEdge) cnt[v.minEdge.start.index]++;
+        }
+        foreach(i, c; cnt) {
+            if (c==0) list.insertBack(_vertices[i]);
+        }
+        while(!list.empty) {
+            Vertex v = list.front;
+            list.removeFront;
+            if (v.hasEdge) {
+                size_t i = v.minEdge.start.index;
+                if (--cnt[i]==0) {
+                    list.insertBack(_vertices[i]);
                 }
-                u1 = u1.minEdge.start;
-                u2 = u2.minEdge.start;
-                if (u2 is _root) break;
-                u2 = u2.minEdge.start;
+            }
+        }
+        foreach(i, c; cnt) {
+            if (c > 0) {
+                // 閉路が検出された
+                Vertex v = _vertices[i];
+                Vertex u = v;
+                do {
+                    u.onCycle = true;
+                    u = u.minEdge.start;
+                } while(u !is v);
+                return rec(v) + _vertices.filter!"a.onCycle".map!"a.minEdge.weight".sum;
             }
         }
 
