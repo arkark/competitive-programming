@@ -19,6 +19,14 @@ void main() {
 
 // ----------------------------------------------
 
+void scanln(Args...)(ref Args args) {
+    foreach(i, ref v; args) {
+        "%d".readf(&v);
+        (i==args.length-1 ? "\n" : " ").readf;
+    }
+    // ("%d".repeat(args.length).join(" ") ~ "\n").readf(args);
+}
+
 void times(alias fun)(int n) {
     // n.iota.each!(i => fun());
     foreach(i; 0..n) fun();
