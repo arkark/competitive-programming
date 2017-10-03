@@ -12,6 +12,7 @@ import std.range;
 import std.container;
 import std.ascii;
 import std.concurrency;
+alias Generator = std.concurrency.Generator;
 
 void main() {
 
