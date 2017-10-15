@@ -15,7 +15,6 @@ import std.concurrency;
 import core.bitop : popcnt;
 alias Generator = std.concurrency.Generator;
 
-long INF = long.max;
 struct P{long x, y;}
 void main() {
     int N, K;
@@ -28,14 +27,14 @@ void main() {
     long[] xs = ps.map!"a.x".array;
     long[] ys = ps.map!"a.y".array;
 
-    long ans = INF;
-    foreach(x1; xs) foreach(x2; xs) foreach(y1; ys) foreach(y2; ys) {
-        if (ps.count!(
-            p => p.x>=x1 && p.x<=x2 && p.y>=y1 && p.y<=y2
-        ) < K) continue;
-        ans = min(ans, (x2-x1)*(y2-y1));
-    }
-    ans.writeln;
+    new Generator!long({
+        foreach(x1; xs) foreach(x2; xs) foreach(y1; ys) foreach(y2; ys) {
+            if (ps.count!(
+                p => p.x>=x1 && p.x<=x2 && p.y>=y1 && p.y<=y2
+            ) < K) continue;
+            yield((x2-x1)*(y2-y1));
+        }
+    }).reduce!min.writeln;
 }
 
 // ----------------------------------------------
