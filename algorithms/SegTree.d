@@ -6,7 +6,7 @@ struct SegTree(T, alias fun, T initValue)
     if (is(typeof(fun(T.init, T.init)) : T)) {
 
 private:
-    T[] _data;
+    Node[] _data;
     size_t _size;
     size_t _l, _r;
 
@@ -30,7 +30,7 @@ public:
             _size *= 2;
         }
         _data.length = _size*2-1;
-        _data[] = initValue;
+        _data[] = Node(size_t.max, initValue);
         _l = 0;
         _r = size;
     }
@@ -38,42 +38,77 @@ public:
     // i番目の要素をxに変更
     // O(logN)
     void update(size_t i, T x) {
+        size_t index = i;
         i += _size-1;
-        _data[i] = x;
-        while(i>0) {
+        _data[i] = Node(index, x);
+        while(i > 0) {
             i = (i-1)/2;
-            _data[i] = fun(_data[i*2+1], _data[i*2+2]);
+            Node nl = _data[i*2+1];
+            Node nr = _data[i*2+2];
+            _data[i] = select(nl, nr);
         }
     }
 
     // 配列で指定
     // O(N)
     void update(T[] ary) {
-        foreach(size_t i, e; ary) {
-            size_t _i = i+_size-1;
-            _data[_i] = e;
+        foreach(i, e; ary) {
+            _data[i+_size-1] = Node(i, e);
         }
-        foreach(i; 0.._size-1) {
-            size_t _i = _size-i-2;
-            _data[_i] = fun(_data[_i*2+1], _data[_i*2+2]);
+        foreach(i; (_size-1).iota.retro) {
+            Node nl = _data[i*2+1];
+            Node nr = _data[i*2+2];
+            _data[i] = select(nl, nr);
         }
     }
 
-    // 区間[a, b)でのクエリ
+    // 区間[a, b)でのクエリ (値の取得)
     // O(logN)
     T query(size_t a, size_t b) {
-        T rec(size_t a, size_t b, size_t k, size_t l, size_t r) {
-            if (b<=l || r<=a) return initValue;
-            if (a<=l && r<=b) return _data[k];
-            T vl = rec(a, b, k*2+1, l, (l+r)/2);
-            T vr = rec(a, b, k*2+2, (l+r)/2, r);
-            return fun(vl, vr);
+        return queryRec(a, b, 0, 0, _size).value;
+    }
+
+    // 区間[a, b)でのクエリ (indexの取得)
+    // O(logN)
+    size_t queryIndex(size_t a, size_t b) out(result) {
+        // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+        assert(result != size_t.max);
+    } body {
+        return queryRec(a, b, 0, 0, _size).index;
+    }
+
+    private Node queryRec(size_t a, size_t b, size_t k, size_t l, size_t r) {
+        if (b<=l || r<=a) return Node(size_t.max, initValue);
+        if (a<=l && r<=b) return _data[k];
+        Node nl = queryRec(a, b, k*2+1, l, (l+r)/2);
+        Node nr = queryRec(a, b, k*2+2, (l+r)/2, r);
+        return select(nl, nr);
+    }
+
+    private Node select(Node nl, Node nr) {
+        T v = fun(nl.value, nr.value);
+        if (nl.value == v) {
+            return nl;
+        } else if (nr.value == v) {
+            return nr;
+        } else {
+            return Node(size_t.max, v);
         }
-        return rec(a, b, 0, 0, _size);
+    }
+
+    // O(1)
+    T get(size_t i) {
+        return _data[_size-1 + i].value;
     }
 
     // O(N)
     T[] array() {
-        return _data[_l+_size-1.._r+_size-1];
+        return _data[_l+_size-1.._r+_size-1].map!"a.value".array;
+    }
+
+private:
+    struct Node {
+        size_t index;
+        T value;
     }
 }
