@@ -6,16 +6,14 @@ private:
 
 public:
     this(size_t size) {
-        _vertices = new Vertex[size];
+        init(size);
+    }
+
+    void init(size_t size) {
+        _vertices.length = size;
         foreach(i, ref v; _vertices) {
             v.index = i;
             v.parent = i;
-        }
-    }
-
-    void makeSet(size_t[] indices...) {
-        foreach(index; indices) {
-            _vertices[index] = Vertex(index, index);
         }
     }
 
