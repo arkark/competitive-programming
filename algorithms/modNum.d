@@ -1,5 +1,14 @@
-struct ModNum(T, T mod) if (__traits(isIntegral, T)) {
+alias ModNum = ModNumber!(long, MOD);
+
+struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     T value;
+    this(S: T)(S value) {
+        this.value = value;
+    }
+    typeof(this) opAssign(S: T)(S value) {
+        this.value = value;
+        return this;
+    }
     typeof(this) opBinary(string op)(typeof(this) that) if (op=="+" || op=="-" || op=="*") {
         mixin("return typeof(this)((this.value"~op~"that.value+mod)%mod);");
     }
