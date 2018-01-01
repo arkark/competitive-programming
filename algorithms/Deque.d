@@ -168,10 +168,10 @@ public:
         int _frontIndex = frontIndex + (cast(int) indices[0]);
         int _backIndex = frontIndex + (cast(int) indices[1]);
         mixin(
-            format!"frontData[clamp(-_backIndex, 0, $)..clamp(-_frontIndex, 0, $)] %s= value;"(op)
+            "frontData[clamp(-_backIndex, 0, $)..clamp(-_frontIndex, 0, $)] %s= value;".format(op)
         );
         mixin(
-            format!"backData[clamp(_frontIndex, 0, $)..clamp(_backIndex, 0, $)] %s= value;"(op)
+            "backData[clamp(_frontIndex, 0, $)..clamp(_backIndex, 0, $)] %s= value;".format(op)
         );
         return this;
     }
@@ -179,10 +179,10 @@ public:
     // xs[] op= value
     typeof(this) opIndexOpAssign(string op)(T value) {
         mixin(
-            format!"frontData[] %s= value;"(op)
+            "frontData[] %s= value;".format(op)
         );
         mixin(
-            format!"backData[] %s= value;"(op)
+            "backData[] %s= value;".format(op)
         );
         return this;
     }
@@ -218,7 +218,7 @@ public:
     string toString() const {
         auto xs = frontData[clamp(-backIndex, 0, $)..clamp(-frontIndex, 0, $)];
         auto ys = backData[clamp(frontIndex, 0, $)..clamp(backIndex, 0, $)];
-        return format!"Deque(%s)"(xs.retro.array ~ ys);
+        return "Deque(%s)".format(xs.retro.array ~ ys);
     }
 
 private:
