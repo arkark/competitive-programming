@@ -232,7 +232,7 @@ private:
     invariant {
         assert(-frontIndex <= cast(int)frontData.length);
         assert(frontIndex <= backIndex);
-        assert(backIndex <= backData.length);
+        assert(backIndex <= cast(int)backData.length);
     }
 }
 
