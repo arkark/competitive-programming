@@ -39,33 +39,32 @@ void main() {
     void rec(Vertex v, int d = 0) {
         v.children.each!(v => rec(v, d+1));
 
-        v.dp.clear;
+        v.dp = [];
         size_t size = 0;
         foreach(u; v.children) {
             if (u.dp.length > v.dp.length) {
                 swap(u.dp, v.dp);
             }
-            size = max(size, u.dp.length);
-            size_t i = 0;
-            foreach(ys; u.dp) {
-                ModNum[3] xs = v.dp[i].dup;
-                v.dp[i][] = ModNum(0);
+            size_t len = u.dp.length;
+            size = max(size, len);
+            foreach(i, ys; u.dp) {
+                ModNum[3] xs = v.dp[$+i-len].dup;
+                v.dp[$+i-len][] = ModNum(0);
                 foreach(j, x; xs) foreach(k, y; ys) {
-                    v.dp[i][min(2, j+k)] += x*y;
+                    v.dp[$+i-len][min(2, j+k)] += x*y;
                 }
-                i++;
             }
         }
         foreach(i; 0..size) {
-            v.dp[i][0] += v.dp[i][2];
-            v.dp[i][2] = 0;
+            v.dp[$-i-1][0] += v.dp[$-i-1][2];
+            v.dp[$-i-1][2] = 0;
         }
 
-        v.dp.insertFront([ModNum(1), ModNum(1), ModNum(0)]);
+        v.dp ~= [ModNum(1), ModNum(1), ModNum(0)];
     }
 
     rec(vs.front);
-    map!"a[1]"(vs.front.dp).enumerate.map!(
+    vs.front.dp.map!"a[1]".retro.enumerate.map!(
         a => a.value * ModNum(2)^^(N+1 - depthCnt[a.index])
     ).sum.writeln;
 }
@@ -73,7 +72,7 @@ void main() {
 class Vertex {
     Vertex parent;
     Vertex[] children;
-    Deque!(ModNum[3]) dp;
+    ModNum[3][] dp;
 }
 
 alias ModNum = ModNumber!(long, MOD);
@@ -143,243 +142,6 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     }
 }
 
-// Deque - implemented in dynamic arrays
-
-struct Deque(T) {
-    import std.range, std.algorithm, std.conv, std.format;
-
-private:
-    T[] frontData = [];
-    T[] backData = [];
-
-    // [frontIndex, backIndex)
-    int frontIndex = 0;
-    int backIndex = 0;
-
-public:
-
-    this(T[] data) {
-        this([], data, 0, cast(int)data.length, false);
-    }
-
-    bool empty() @property {
-        return frontIndex == backIndex;
-    }
-
-    size_t length() @property {
-        return cast(size_t) (backIndex - frontIndex);
-    }
-
-    void clear() {
-        frontIndex = backIndex = 0;
-        frontData = [];
-        backData = [];
-    }
-
-    ref T front() @property in {
-        assert(!empty, "Attempting to get the front of an empty Deque");
-    } body {
-        return this[0];
-    }
-
-    ref T front(T value) @property in {
-        assert(!empty, "Attempting to assign to the front of an empty Deque");
-    } body {
-        return this[0] = value;
-    }
-
-    ref T back() @property in {
-        assert(!empty, "Attempting to get the back of an empty Deque");
-    } body {
-        return this[$-1];
-    }
-
-    ref T back(T value) @property in {
-        assert(!empty, "Attempting to assign to the back of an empty Deque");
-    } body {
-        return this[$-1] = value;
-    }
-
-    void insertFront(T value) {
-        if (frontIndex>0) {
-            backData[frontIndex - 1] = value;
-        } else {
-            frontData ~= value;
-        }
-        frontIndex--;
-    }
-
-    void insertBack(T value) {
-        if (backIndex < 0) {
-            frontData[-backIndex - 1] = value;
-        } else {
-            backData ~= value;
-        }
-        backIndex++;
-    }
-
-    void removeFront() in {
-        assert(!empty, "Attempting to remove the front of an empty Deque");
-    } body {
-        if (frontIndex >= 0) {
-            // do nothing
-        } else {
-            frontData = frontData[0..$-1];
-        }
-        frontIndex++;
-    }
-    alias popFront = removeFront;
-
-    void removeBack() in {
-        assert(!empty, "Attempting to remove the back of an empty Deque");
-    } body {
-        if (backIndex <= 0) {
-            // do nothing
-        } else {
-            backData = backData[0..$-1];
-        }
-        backIndex--;
-    }
-    alias popBack = removeBack;
-
-    typeof(this) save() @property {
-        return typeof(this)(frontData, backData, frontIndex, backIndex, true);
-    }
-
-    void reserveFront(int num) {
-        frontData.reserve(num);
-    }
-
-    void reserveBack(int num) {
-        backData.reserve(num);
-    }
-
-    // xs ~= value
-    typeof(this) opOpAssign(string op)(T value) if (op == "~") {
-        this.insertBack(value);
-        return this;
-    }
-
-    // xs[index]
-    ref T opIndex(size_t index) in {
-        assert(0<=index && index<length, "Access violation");
-    } body {
-        int _index = frontIndex + (cast(int)index);
-        return _index>=0 ? backData[_index] : frontData[-_index - 1];
-    }
-
-    // xs[indices[0] .. indices[1]]
-    typeof(this) opIndex(size_t[2] indices) in {
-        assert(0<=indices[0] && indices[1]<=length, "Access violation");
-    } body {
-        return typeof(this)(frontData, backData, frontIndex + cast(int)indices[0], frontIndex + cast(int)indices[1], false);
-    }
-
-    // xs[]
-    typeof(this) opIndex() {
-        return this;
-    }
-
-    // xs[index] = value
-    ref T opIndexAssign(T value, size_t index) in {
-        assert(0<=index && index<length, "Access violation");
-    } body {
-        int _index = (cast(int)index) - frontIndex;
-        return (_index>=0 ? backData[_index] : frontData[-_index - 1]) = value;
-    }
-
-    // xs[indices[0] .. indices[1]] = value
-    typeof(this) opIndexAssign(T value, size_t[2] indices) in {
-        assert(0<=indices[0] && indices[1]<=length, "Access violation");
-    } body {
-        int _frontIndex = frontIndex + (cast(int) indices[0]);
-        int _backIndex = frontIndex + (cast(int) indices[1]);
-        frontData[clamp(-_backIndex, 0, $)..clamp(-_frontIndex, 0, $)] = value;
-        backData[clamp(_frontIndex, 0, $)..clamp(_backIndex, 0, $)] = value;
-        return this;
-    }
-
-    // xs[] = value
-    typeof(this) opIndexAssign(T value) {
-        backData[] = value;
-        frontData[] = value;
-        return this;
-    }
-
-    // xs[indices[0] .. indices[1]] op= value
-    typeof(this) opIndexOpAssign(string op)(T value, size_t[2] indices) in {
-        assert(0<=indices[0] && indices[1]<=length, "Access violation");
-    } body {
-        int _frontIndex = frontIndex + (cast(int) indices[0]);
-        int _backIndex = frontIndex + (cast(int) indices[1]);
-        mixin(
-            "frontData[clamp(-_backIndex, 0, $)..clamp(-_frontIndex, 0, $)] %s= value;".format(op)
-        );
-        mixin(
-            "backData[clamp(_frontIndex, 0, $)..clamp(_backIndex, 0, $)] %s= value;".format(op)
-        );
-        return this;
-    }
-
-    // xs[] op= value
-    typeof(this) opIndexOpAssign(string op)(T value) {
-        mixin(
-            "frontData[] %s= value;".format(op)
-        );
-        mixin(
-            "backData[] %s= value;".format(op)
-        );
-        return this;
-    }
-
-    // $
-    size_t opDollar(size_t dim: 0)() {
-        return length;
-    }
-
-    // i..j
-    size_t[2] opSlice(size_t dim: 0)(size_t i, size_t j) in {
-        assert(0<=i && j<=length, "Access violation");
-    } body {
-        return [i, j];
-    }
-
-    bool opEquals(S: T)(Deque!S that) {
-        if (this.length != that.length) return false;
-        foreach(i; 0..this.length) {
-            if (this[i] != that[i]) return false;
-        }
-        return true;
-    }
-
-    bool opEquals(S: T)(S[] that) {
-        if (this.length != that.length) return false;
-        foreach(i; 0..this.length) {
-            if (this[i] != that[i]) return false;
-        }
-        return true;
-    }
-
-    string toString() const {
-        auto xs = frontData[clamp(-backIndex, 0, $)..clamp(-frontIndex, 0, $)];
-        auto ys = backData[clamp(frontIndex, 0, $)..clamp(backIndex, 0, $)];
-        return "Deque(%s)".format(xs.retro.array ~ ys);
-    }
-
-private:
-    this(T[] frontData, T[] backData, int frontIndex, int backIndex, bool duplicated) {
-        this.frontData = duplicated ? frontData.dup : frontData[0..clamp(-frontIndex, 0, $)];
-        this.backData = duplicated ? backData.dup : backData[0..clamp(backIndex, 0, $)];
-        this.frontIndex = frontIndex;
-        this.backIndex = backIndex;
-    }
-
-    invariant {
-        assert(-frontIndex <= cast(int)frontData.length);
-        assert(frontIndex <= backIndex);
-        assert(backIndex <= cast(int)backData.length);
-    }
-}
 
 // ----------------------------------------------
 
