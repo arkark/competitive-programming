@@ -67,15 +67,15 @@ auto rep(alias fun, T = typeof(fun()))(int n) {
     return res;
 }
 
-long ceil(long x, long y) {
-    // (x + y - 1) / y will only work for positive numbers ...
-    long t = x / y;
+T ceil(T)(T x, T y) if (__traits(isIntegral, T)) {
+    // `(x+y-1)/y` will only work for positive numbers ...
+    T t = x / y;
     if (t * y < x) t++;
     return t;
 }
 
-long floor(long x, long y) {
-    long t = x / y;
+T floor(T)(T x, T y) if (__traits(isIntegral, T)) {
+    T t = x / y;
     if (t * y > x) t--;
     return t;
 }
