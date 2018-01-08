@@ -43,6 +43,19 @@ auto rep(alias fun, T = typeof(fun()))(int n) {
     return res;
 }
 
+long ceil(long x, long y) {
+    // (x + y - 1) / y will only work for positive numbers ...
+    long t = x / y;
+    if (t * y < x) t++;
+    return t;
+}
+
+long floor(long x, long y) {
+    long t = x / y;
+    if (t * y > x) t--;
+    return t;
+}
+
 // fold was added in D 2.071.0
 static if (__VERSION__ < 2071) {
     template fold(fun...) if (fun.length >= 1) {
