@@ -21,16 +21,29 @@ const long MOD = 10L^^9+7;
 void main() {
     int N; long Y;
     scanln(N, Y);
-    foreach(i; 0..N+1) {
-        foreach(j; 0..N-i+1) {
-            int k = N-i-j;
-            if (10000*i+5000*j+1000*k == Y) {
-                writeln(i, " ", j, " ", k);
-                return;
-            }
-        }
+
+    // 10000x + 5000y + 1000z = Y
+    // x + y + z = N
+
+    long t = (Y - 1000*N) / 1000;
+    // 9x + 4y = t
+
+    long a = t%4;
+    long b = (t - 9*(t%4)) / 4;
+    // x =  4k + a
+    // y = -9k + b
+
+    long minK = max(ceil(-a, 4), ceil(a + b - N, 5));
+    long maxK = floor(b, 9);
+    if (minK <= maxK) {
+        long k = minK; // minK <= k <= maxK
+        long x = 4*k + a;
+        long y = -9*k + b;
+        long z = N - x - y;
+        writeln(x, " ", y, " ", z);
+    } else {
+        writeln("-1 -1 -1");
     }
-    writeln("-1 -1 -1");
 }
 
 // ----------------------------------------------
@@ -52,6 +65,19 @@ auto rep(alias fun, T = typeof(fun()))(int n) {
     T[] res = new T[n];
     foreach(ref e; res) e = fun();
     return res;
+}
+
+long ceil(long x, long y) {
+    // (x + y - 1) / y will only work for positive numbers ...
+    long t = x / y;
+    if (t * y < x) t++;
+    return t;
+}
+
+long floor(long x, long y) {
+    long t = x / y;
+    if (t * y > x) t--;
+    return t;
 }
 
 // fold was added in D 2.071.0
