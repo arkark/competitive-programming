@@ -1,5 +1,6 @@
 import std.stdio;
 import std.string;
+import std.format;
 import std.conv;
 import std.typecons;
 import std.algorithm;
@@ -12,6 +13,7 @@ import std.range;
 import std.container;
 import std.ascii;
 import std.concurrency;
+import std.traits;
 import core.bitop : popcnt;
 alias Generator = std.concurrency.Generator;
 
@@ -24,12 +26,35 @@ void main() {
 
 // ----------------------------------------------
 
-void scanln(Args...)(ref Args args) {
-    foreach(i, ref v; args) {
-        "%d".readf(&v);
-        (i==args.length-1 ? "\n" : " ").readf;
+void scanln(Args...)(auto ref Args args) {
+    string getFormat(T)() {
+        static if (isIntegral!T) {
+            return "%d";
+        } else if (isFloatingPoint!T) {
+            return "%g";
+        } else if (isSomeString!T || isSomeChar!T) {
+            return "%s";
+        }
+        assert(false);
     }
-    // ("%d".repeat(args.length).join(" ") ~ "\n").readf(args);
+    enum string str = {
+        string res;
+        foreach(i, T; Args) {
+            res ~= getFormat!T;
+            res ~= i==Args.length-1 ? "\n" : " ";
+        }
+        return res;
+    }();
+    // readf!str(args);
+    mixin((){
+        string res = "str.readf(";
+        foreach(i; 0..Args.length) {
+            if (i>0) res ~= ", ";
+            res ~= "&args[%d]".format(i);
+        }
+        res ~= ");";
+        return res;
+    }());
 }
 
 void times(alias fun)(int n) {
