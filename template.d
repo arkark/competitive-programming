@@ -37,7 +37,7 @@ void scanln(Args...)(auto ref Args args) {
         }
         assert(false);
     }
-    enum string str = {
+    enum str = {
         string res;
         foreach(i, T; Args) {
             res ~= getFormat!T;
