@@ -27,34 +27,21 @@ void main() {
 // ----------------------------------------------
 
 void scanln(Args...)(auto ref Args args) {
-    string getFormat(T)() {
+    import std.meta;
+    template getFormat(T) {
         static if (isIntegral!T) {
-            return "%d";
-        } else if (isFloatingPoint!T) {
-            return "%g";
-        } else if (isSomeString!T || isSomeChar!T) {
-            return "%s";
+            enum getFormat = "%d";
+        } else static if (isFloatingPoint!T) {
+            enum getFormat = "%g";
+        } else static if (isSomeString!T || isSomeChar!T) {
+            enum getFormat = "%s";
+        } else {
+            static assert(false);
         }
-        assert(false);
     }
-    enum str = {
-        string res;
-        foreach(i, T; Args) {
-            res ~= getFormat!T;
-            res ~= i==Args.length-1 ? "\n" : " ";
-        }
-        return res;
-    }();
+    enum string str = [staticMap!(getFormat, Args)].join(" ") ~ "\n";
     // readf!str(args);
-    mixin((){
-        string res = "str.readf(";
-        foreach(i; 0..Args.length) {
-            if (i>0) res ~= ", ";
-            res ~= "&args[%d]".format(i);
-        }
-        res ~= ");";
-        return res;
-    }());
+    mixin("str.readf(" ~ Args.length.iota.map!(i => "&args[%d]".format(i)).join(", ") ~ ");");
 }
 
 void times(alias fun)(int n) {
