@@ -167,23 +167,23 @@ public:
     } body {
         int _frontIndex = frontIndex + (cast(int) indices[0]);
         int _backIndex = frontIndex + (cast(int) indices[1]);
-        mixin(
-            "frontData[clamp(-_backIndex, 0, $)..clamp(-_frontIndex, 0, $)] %s= value;".format(op)
-        );
-        mixin(
-            "backData[clamp(_frontIndex, 0, $)..clamp(_backIndex, 0, $)] %s= value;".format(op)
-        );
+        mixin(q{
+            frontData[clamp(-_backIndex, 0, $)..clamp(-_frontIndex, 0, $)] %s= value;
+        }.format(op));
+        mixin(q{
+            backData[clamp(_frontIndex, 0, $)..clamp(_backIndex, 0, $)] %s= value;
+        }.format(op));
         return this;
     }
 
     // xs[] op= value
     typeof(this) opIndexOpAssign(string op)(T value) {
-        mixin(
-            "frontData[] %s= value;".format(op)
-        );
-        mixin(
-            "backData[] %s= value;".format(op)
-        );
+        mixin(q{
+            frontData[] %s= value;
+        }.format(op));
+        mixin(q{
+            backData[] %s= value;
+        }.format(op));
         return this;
     }
 
