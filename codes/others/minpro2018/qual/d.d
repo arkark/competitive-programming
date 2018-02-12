@@ -21,6 +21,7 @@ const long INF = long.max/3;
 const long MOD = 10L^^9+7;
 
 void main() {
+    int T = 2048;
     int N, K, X, Y;
     scanln(N, K, X, Y);
     int[] xs = readln.split.to!(int[]).sort!"a<b".array;
@@ -34,9 +35,9 @@ void main() {
         }
     }
 
-    ModNum comb(int n, int k) {
-        if (k==0 || k==n) return ModNum(1);
-        return memoize!comb(n-1, k) + memoize!comb(n-1, k-1);
+    ModNum[][] comb = new ModNum[][](T, T);
+    foreach(n; 0..T) foreach(k; 0..n+1) {
+        comb[n][k] = k==0||k==n ? ModNum(1) : comb[n-1][k] + comb[n-1][k-1];
     }
 
     ModNum calc(int n, int a, int b) {
@@ -45,34 +46,29 @@ void main() {
         if (a > n || b > n) return memoize!calc(n, min(n, a), min(n, b));
         ModNum res = 0;
         foreach(i; n-b .. a+1) {
-            res += memoize!comb(n, i);
+            res += comb[n][i];
         }
         return res;
     }
 
-    int[] cnt = new int[2048];
+    int[] cnt = new int[T];
     foreach(x; xs) cnt[x]++;
 
-    ModNum ans = 0;
-
-    foreach(x; xs.uniq) {
+    xs.uniq.map!((x) {
         cnt[x]--;
 
-        ModNum acc = 1;
-
-        int[] ns = new int[2048];
+        int[] ns = new int[T];
         foreach(a; ass[0][1..$]) {
             ns[min(a^x^X, a^x^Y)]++;
         }
-        foreach(i, n; ns) {
-            acc *= memoize!calc(n, cnt[i], X==Y ? 0 : cnt[i^X^Y]);
-        }
-        ans += acc;
-rep(it, need[j] + 1) if (it <= num[j] and (need[j] - it) <= num[(j ^ X ^ Y)]) coef = (coef + C[need[j]][it]) % mod;
-        cnt[x]++;
-    }
+        ModNum res = ns.enumerate.map!(
+            a => memoize!calc(a.value, X==Y ? 0 : cnt[a.index], cnt[a.index^X^Y])
+        ).fold!"a*b"(ModNum(1));
 
-    ans.writeln;
+        cnt[x]++;
+
+        return res;
+    }).sum.writeln;
 
 }
 
