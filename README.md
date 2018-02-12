@@ -1,8 +1,8 @@
 # A Repository for Competitive Programming
 
-競プロ用のリポジトリ(自分用)。
-主にD言語を使ってます。
+競プロ用リポジトリ
+Main Language: D
 
-- algorithms/: ライブラリ。まだあまり作ってない
-- codes/: 書いたコードを適当にここに投げてる
-- template.d: 競プロ用のテンプレート
+- algorithms/: ライブラリ
+- codes/: 書いたコードをここに投げてる
+- template.d: テンプレート
