@@ -1,50 +1,58 @@
 alias ModNum = ModNumber!(long, MOD);
 
 struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
+
     T value;
     this(T value) {
         this.value = value;
     }
 
-    typeof(this) opAssign(T value) {
+    ModNumber opAssign(T value) {
         this.value = value;
         return this;
     }
 
-    typeof(this) opBinary(string op)(typeof(this) that) if (op=="+" || op=="-" || op=="*") {
-        mixin("return typeof(this)((this.value "~op~" that.value + mod) % mod);");
+    ModNumber opBinary(string op)(ModNumber that) if (op=="+" || op=="-" || op=="*") {
+        return ModNumber(mixin("(this.value "~op~" that.value + mod) % mod"));
     }
-    typeof(this) opBinary(string op)(T that) if (op=="+" || op=="-" || op=="*") {
-        mixin("return typeof(this)((this.value "~op~" that + mod) % mod);");
+    ModNumber opBinary(string op)(T that) if (op=="+" || op=="-" || op=="*") {
+        return ModNumber(mixin("(this.value "~op~" that + mod) % mod"));
+    }
+    ModNumber opBinaryRight(string op)(T that) if (op=="+" || op=="-" || op=="*") {
+        return ModNumber(mixin("(that "~op~" this.value + mod) % mod"));
     }
 
-    typeof(this) opBinary(string op)(typeof(this) that) if (op == "/") {
+    ModNumber opBinary(string op)(ModNumber that) if (op == "/") {
         return this*getReciprocal(that);
     }
-    typeof(this) opBinary(string op)(T that) if (op == "/") {
-        return this*getReciprocal(typeof(this)(that));
+    ModNumber opBinary(string op)(T that) if (op == "/") {
+        return this*getReciprocal(ModNumber(that));
+    }
+    ModNumber opBinaryRight(string op)(T that) if (op == "/") {
+        return ModNumber(that)*getReciprocal(this);
     }
 
-    typeof(this) opBinary(string op)(typeof(this) that) if (op == "^^") {
-        return typeof(this)(modPow(this.value, that.value));
+    ModNumber opBinary(string op)(ModNumber that) if (op == "^^") {
+        return ModNumber(modPow(this.value, that.value));
     }
-    typeof(this) opBinary(string op, S)(S that) if (op == "^^" && __traits(isIntegral, S)) {
-        return typeof(this)(modPow(this.value, that));
+    ModNumber opBinary(string op)(T that) if (op == "^^") {
+        return ModNumber(modPow(this.value, that));
+    }
+    ModNumber opBinaryRight(string op)(T that) if (op == "^^") {
+        return ModNumber(modPow(that, this.value));
     }
 
-    void opOpAssign(string op)(typeof(this) that) if (op=="+" || op=="-" || op=="*" || op=="/") {
-        mixin("this = this" ~op~ "that;");
+    void opOpAssign(string op)(ModNumber that) if (op=="+" || op=="-" || op=="*" || op=="/") {
+        this = mixin("this" ~op~ "that");
     }
     void opOpAssign(string op)(T that) if (op=="+" || op=="-" || op=="*" || op=="/") {
-        mixin("this = this" ~op~ "that;");
+        this = mixin("this" ~op~ "that");
     }
 
-    typeof(this) getReciprocal(typeof(this) x) in {
-        debug {
-            assert(isPrime(mod));
-        }
+    ModNumber getReciprocal(ModNumber x) in {
+        debug assert(isPrime(mod));
     } body {
-        return typeof(this)(modPow(x.value, mod-2));
+        return ModNumber(modPow(x.value, mod-2));
     }
     T modPow(T base, T power)  {
         T result = 1;
@@ -52,7 +60,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
             if (power & 1) {
                 result = (result * base) % mod;
             }
-            base = base^^2 % mod;
+            base = base*base % mod;
         }
         return result;
     }
@@ -62,12 +70,12 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
         return this.value.to!string;
     }
 
-    invariant() {
+    invariant {
         assert(this.value>=0);
         assert(this.value<mod);
     }
 
-    bool isPrime(T n) {
+    private bool isPrime(T n) {
         if (n<2) {
             return false;
         } else if (n==2) {
