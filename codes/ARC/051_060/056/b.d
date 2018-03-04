@@ -1,5 +1,6 @@
 import std.stdio;
 import std.string;
+import std.format;
 import std.conv;
 import std.typecons;
 import std.algorithm;
@@ -11,98 +12,268 @@ import std.math;
 import std.range;
 import std.container;
 import std.ascii;
-import std.datetime;
-void times(int n, void delegate() pred) {
-    foreach(i; 0..n) pred();
-}
-T[] rep(T)(int n, T delegate() pred) {
-    T[] res = new T[n];
-    foreach(ref e; res) e = pred();
-    return res;
-}
+import std.concurrency;
+import std.traits;
+import core.bitop : popcnt;
+alias Generator = std.concurrency.Generator;
+
+const long INF = long.max/3;
+const long MOD = 10L^^9+7;
 
 void main() {
     int N, M, S;
-    readf("%d %d %d\n", &N, &M, &S);
+    scanln(N, M, S);
     S--;
 
-    Vertex[] vertices = N.iota.map!(i => new Vertex(i)).array;
-    M.times({
+    Vertex[] vs = N.iota.map!(i => new Vertex(i)).array;
+    foreach(_; 0..M) {
         int u, v;
-        readf("%d %d\n", &u, &v);
+        scanln(u, v);
         u--; v--;
-        Edge e = new Edge(vertices[u], vertices[v]);
-        vertices[u].edges1 ~= e;
-        vertices[v].edges1 ~= e;
-    });
+        vs[u].vertices ~= vs[v];
+        vs[v].vertices ~= vs[u];
+    }
 
-    {
-        bool[] used = new bool[N];
-        auto list = DList!Vertex(vertices[S]);
-        vertices[S].value = 1;
-        vertices[S].edges2 = vertices[S].edges1;
-        while(!list.empty) {
-            Vertex v = list.front;
-            used[v.index] = true;
-            list.removeFront;
-            foreach(edge; v.edges2) {
-                Vertex _v = edge.get(v);
-                _v.value += v.value;
-                if (!_v.edges2.empty) {
-                    _v.edges1 = _v.edges2;
-                    _v.edges2 = [];
-                }
-                foreach(e; _v.edges1) {
-                    if (e.get(_v) !is v) {
-                        _v.edges2 ~= e;
-                    }
-                }
-                if (!used[_v.index]) {
-                    list.insertBack(_v);
-                }
-            }
+    vs[S].used = true;
+    auto tree = redBlackTree!("a.minIndex > b.minIndex", true, Vertex)(vs[S]);
+    while(!tree.empty) {
+        Vertex u = tree.front;
+        tree.removeFront;
+        foreach(v; u.vertices) {
+            if (v.used) continue;
+            v.minIndex = min(v.minIndex, u.minIndex);
+            v.used = true;
+            tree.insert(v);
         }
     }
 
-    foreach(i; 0..N) {
-        if (vertices[i].value>0) {
-            writeln(i+1);
-
-            bool[] used = new bool[N];
-            auto list = DList!Vertex(vertices[i]);
-            long value = vertices[i].value;
-            while(!list.empty) {
-                Vertex v = list.front;
-                used[v.index] = true;
-                list.removeFront;
-                foreach(edge; v.edges2) {
-                    edge.get(v).value -= value;
-                    if (!used[edge.get(v).index]) {
-                        list.insertBack(edge.get(v));
-                    }
-                }
-            }
-        }
+    foreach(i, v; vs) {
+        if (v.minIndex < i) continue;
+        writeln(i+1);
     }
 }
 
 class Vertex {
     int index;
-    long value;
-    Edge[] edges1;
-    Edge[] edges2;
+    int minIndex;
+    Vertex[] vertices;
+    bool used = false;
     this(int index) {
-        this.index = index;
+        this.minIndex = this.index = index;
+    }
+    override string toString() const {return "";}
+}
+
+// ----------------------------------------------
+
+void scanln(Args...)(auto ref Args args) {
+    import std.meta;
+    template getFormat(T) {
+        static if (isIntegral!T) {
+            enum getFormat = "%d";
+        } else static if (isFloatingPoint!T) {
+            enum getFormat = "%g";
+        } else static if (isSomeString!T || isSomeChar!T) {
+            enum getFormat = "%s";
+        } else {
+            static assert(false);
+        }
+    }
+    enum string str = [staticMap!(getFormat, Args)].join(" ") ~ "\n";
+    // readf!str(args);
+    mixin("str.readf(" ~ Args.length.iota.map!(i => "&args[%d]".format(i)).join(", ") ~ ");");
+}
+
+void times(alias fun)(int n) {
+    // n.iota.each!(i => fun());
+    foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(int n) {
+    // return n.iota.map!(i => fun()).array;
+    T[] res = new T[n];
+    foreach(ref e; res) e = fun();
+    return res;
+}
+
+T ceil(T)(T x, T y) if (__traits(isIntegral, T)) {
+    // `(x+y-1)/y` will only work for positive numbers ...
+    T t = x / y;
+    if (t * y < x) t++;
+    return t;
+}
+
+T floor(T)(T x, T y) if (__traits(isIntegral, T)) {
+    T t = x / y;
+    if (t * y > x) t--;
+    return t;
+}
+
+// fold was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+    template fold(fun...) if (fun.length >= 1) {
+        auto fold(R, S...)(R r, S seed) {
+            static if (S.length < 2) {
+                return reduce!fun(seed, r);
+            } else {
+                return reduce!fun(tuple(seed), r);
+            }
+        }
     }
 }
 
-class Edge {
-    Vertex v1, v2;
-    this(Vertex v1, Vertex v2) {
-        this.v1 = v1;
-        this.v2 = v2;
+// cumulativeFold was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    template cumulativeFold(fun...)
+    if (fun.length >= 1)
+    {
+        import std.meta : staticMap;
+        private alias binfuns = staticMap!(binaryFun, fun);
+
+        auto cumulativeFold(R)(R range)
+        if (isInputRange!(Unqual!R))
+        {
+            return cumulativeFoldImpl(range);
+        }
+
+        auto cumulativeFold(R, S)(R range, S seed)
+        if (isInputRange!(Unqual!R))
+        {
+            static if (fun.length == 1)
+                return cumulativeFoldImpl(range, seed);
+            else
+                return cumulativeFoldImpl(range, seed.expand);
+        }
+
+        private auto cumulativeFoldImpl(R, Args...)(R range, ref Args args)
+        {
+            import std.algorithm.internal : algoFormat;
+
+            static assert(Args.length == 0 || Args.length == fun.length,
+                algoFormat("Seed %s does not have the correct amount of fields (should be %s)",
+                    Args.stringof, fun.length));
+
+            static if (args.length)
+                alias State = staticMap!(Unqual, Args);
+            else
+                alias State = staticMap!(ReduceSeedType!(ElementType!R), binfuns);
+
+            foreach (i, f; binfuns)
+            {
+                static assert(!__traits(compiles, f(args[i], e)) || __traits(compiles,
+                        { args[i] = f(args[i], e); }()),
+                    algoFormat("Incompatible function/seed/element: %s/%s/%s",
+                        fullyQualifiedName!f, Args[i].stringof, E.stringof));
+            }
+
+            static struct Result
+            {
+            private:
+                R source;
+                State state;
+
+                this(R range, ref Args args)
+                {
+                    source = range;
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                    {
+                        static if (args.length)
+                            state[i] = f(args[i], source.front);
+                        else
+                            state[i] = source.front;
+                    }
+                }
+
+            public:
+                @property bool empty()
+                {
+                    return source.empty;
+                }
+
+                @property auto front()
+                {
+                    assert(!empty, "Attempting to fetch the front of an empty cumulativeFold.");
+                    static if (fun.length > 1)
+                    {
+                        import std.typecons : tuple;
+                        return tuple(state);
+                    }
+                    else
+                    {
+                        return state[0];
+                    }
+                }
+
+                void popFront()
+                {
+                    assert(!empty, "Attempting to popFront an empty cumulativeFold.");
+                    source.popFront;
+
+                    if (source.empty)
+                        return;
+
+                    foreach (i, f; binfuns)
+                        state[i] = f(state[i], source.front);
+                }
+
+                static if (isForwardRange!R)
+                {
+                    @property auto save()
+                    {
+                        auto result = this;
+                        result.source = source.save;
+                        return result;
+                    }
+                }
+
+                static if (hasLength!R)
+                {
+                    @property size_t length()
+                    {
+                        return source.length;
+                    }
+                }
+            }
+
+            return Result(range, args);
+        }
     }
-    Vertex get(Vertex v) {
-        return (v1 is v) ? v2 : v1;
+}
+
+// minElement/maxElement was added in D 2.072.0
+static if (__VERSION__ < 2072) {
+    auto minElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto minimum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b < minimum) {
+                element = a;
+                minimum = b;
+            }
+        }
+        return element;
+    }
+    auto maxElement(alias map, Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        alias mapFun = unaryFun!map;
+        auto element = r.front;
+        auto maximum = mapFun(element);
+        r.popFront;
+        foreach(a; r) {
+            auto b = mapFun(a);
+            if (b > maximum) {
+                element = a;
+                maximum = b;
+            }
+        }
+        return element;
     }
 }
