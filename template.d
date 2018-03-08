@@ -11,9 +11,9 @@ import std.array;
 import std.math;
 import std.range;
 import std.container;
-import std.ascii;
 import std.concurrency;
 import std.traits;
+import std.uni;
 import core.bitop : popcnt;
 alias Generator = std.concurrency.Generator;
 
