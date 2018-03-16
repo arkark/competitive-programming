@@ -2,6 +2,8 @@ import std.stdio;
 import std.conv;
 import std.string;
 
+// sieve of Eratosthenes
+
 void main() {
     int n = readln().chomp().to!int();
     bool[] ary1 = n.getIsPrimes();
