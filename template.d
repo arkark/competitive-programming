@@ -17,8 +17,8 @@ import std.uni;
 import core.bitop : popcnt;
 alias Generator = std.concurrency.Generator;
 
-const long INF = long.max/3;
-const long MOD = 10L^^9+7;
+enum long INF = long.max/3;
+enum long MOD = 10L^^9+7;
 
 void main() {
 
