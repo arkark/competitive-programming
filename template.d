@@ -44,11 +44,11 @@ void scanln(Args...)(auto ref Args args) {
     mixin("str.readf(" ~ Args.length.iota.map!(i => "&args[%d]".format(i)).join(", ") ~ ");");
 }
 
-void times(alias fun)(int n) {
+void times(alias fun)(long n) {
     // n.iota.each!(i => fun());
     foreach(i; 0..n) fun();
 }
-auto rep(alias fun, T = typeof(fun()))(int n) {
+auto rep(alias fun, T = typeof(fun()))(long n) {
     // return n.iota.map!(i => fun()).array;
     T[] res = new T[n];
     foreach(ref e; res) e = fun();
