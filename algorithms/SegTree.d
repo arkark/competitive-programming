@@ -1,5 +1,5 @@
 // RMQ (Range Minimum Query)
-alias RMQ(T) = SegTree!(T, (a, b) => a<b ? a:b, T.max);
+// alias RMQ(T) = SegTree!(T, (a, b) => a<b ? a:b, T.max);
 
 // SegTree (Segment Tree)
 struct SegTree(T, alias fun, T initValue)
