@@ -21,6 +21,11 @@ public:
 
     long solve(size_t s, size_t t) {
         long flow = 0;
+        foreach(v; vertices) {
+            foreach(e; v.edges) {
+                e.capacity = e.initCapacity;
+            }
+        }
         while(true) {
             bfs(vertices[s]);
             if (vertices[t].level < 0) break;
@@ -73,12 +78,13 @@ private:
     }
     class Edge {
         Vertex start, end;
+        long initCapacity;
         long capacity;
         Edge revEdge;
         this(Vertex start, Vertex end, long capacity) {
             this.start = start;
             this.end = end;
-            this.capacity = capacity;
+            this.initCapacity = capacity;
         }
     }
 }
