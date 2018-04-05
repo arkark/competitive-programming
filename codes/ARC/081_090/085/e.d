@@ -30,7 +30,7 @@ void main() {
        - 集合A -> 集合B
        - 要素iがAに属するときに利益-as[i]を得る
        - 要素iと要素j = (i+1)n-1 (n ∈ ℕ)に対し
-         - iがAに属し、jがBに属していたときにas[j]だけ損失する
+         - iがAに属し、jがBに属していたときに∞の損失
     */
     auto solver = MaxFlow(N+2);
     long s = N;
@@ -46,7 +46,7 @@ void main() {
         foreach(_j; 2..long.max) {
             long j = (i+1)*_j-1;
             if (j >= N) break;
-            solver.addEdge(i, j, max(0, as[j]));
+            solver.addEdge(i, j, INF);
         }
     }
     long psp = as.map!"-a".filter!"a>=0".sum - solver.solve(s, t);
