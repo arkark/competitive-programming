@@ -26,6 +26,16 @@ void main() {
 
 // ----------------------------------------------
 
+mixin template Constructor(T) {
+    import std.traits : FieldNameTuple;
+    this(Args...)(Args args) {
+        // static foreach(i, v; args) {
+        foreach(i, v; args) {
+            mixin("this." ~ FieldNameTuple!T[i] ~ "= v;");
+        }
+    }
+}
+
 void scanln(Args...)(auto ref Args args) {
     import std.meta;
     template getFormat(T) {
