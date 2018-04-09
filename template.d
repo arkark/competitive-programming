@@ -26,12 +26,12 @@ void main() {
 
 // ----------------------------------------------
 
-mixin template Constructor(T) {
+mixin template Constructor() {
     import std.traits : FieldNameTuple;
     this(Args...)(Args args) {
         // static foreach(i, v; args) {
         foreach(i, v; args) {
-            mixin("this." ~ FieldNameTuple!T[i] ~ "= v;");
+            mixin("this." ~ FieldNameTuple!(typeof(this))[i] ~ "= v;");
         }
     }
 }

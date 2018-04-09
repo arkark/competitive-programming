@@ -95,7 +95,7 @@ class Vertex {
     long index;
     Edge[] edges;
     bool visited;
-    mixin Constructor!(typeof(this));
+    mixin Constructor;
 }
 class Edge {
     long index;
@@ -103,7 +103,7 @@ class Edge {
     long weight;
     long diff;
     bool used = false;
-    mixin Constructor!(typeof(this));
+    mixin Constructor;
 }
 
 
@@ -259,12 +259,12 @@ private:
 
 // ----------------------------------------------
 
-mixin template Constructor(T) {
+mixin template Constructor() {
     import std.traits : FieldNameTuple;
     this(Args...)(Args args) {
         // static foreach(i, v; args) {
         foreach(i, v; args) {
-            mixin("this." ~ FieldNameTuple!T[i] ~ "= v;");
+            mixin("this." ~ FieldNameTuple!(typeof(this))[i] ~ "= v;");
         }
     }
 }
