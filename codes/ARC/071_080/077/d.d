@@ -1,5 +1,6 @@
 import std.stdio;
 import std.string;
+import std.format;
 import std.conv;
 import std.typecons;
 import std.algorithm;
@@ -10,76 +11,93 @@ import std.array;
 import std.math;
 import std.range;
 import std.container;
-import std.ascii;
 import std.concurrency;
-void times(alias fun)(int n) {
-    foreach(i; 0..n) fun();
-}
-auto rep(alias fun, T = typeof(fun()))(int n) {
-    T[] res = new T[n];
-    foreach(ref e; res) e = fun();
-    return res;
-}
+import std.traits;
+import std.uni;
+import core.bitop : popcnt;
+alias Generator = std.concurrency.Generator;
 
-immutable long MOD = 10^^9+7;
-alias ModLong = ModNum!(long, MOD);
+enum long INF = long.max/3;
+enum long MOD = 10L^^9+7;
+
 void main() {
-    int N = readln.chomp.to!int;
-
-    ModLong[] fact = new ModLong[N+10];
-    ModLong[] _fact = new ModLong[N+10];
-    foreach(i, ref e; fact) {
-        e = i==0 ? ModLong(1) : ModLong(i) * fact[i-1];
-    }
-    foreach(i; _fact.length.iota.retro) {
-        _fact[i] = _fact.length-1 ? ModLong(1)/fact[i] : ModLong(i+1) * _fact[i+1];
-    }
-    ModLong comb(int n, int r) {
-        return fact[n]*_fact[r]*_fact[n-r];
-    }
-
-    int[] as = readln.split.to!(int[]);
-
-    auto bs = as.enumerate.array.sort!"a.value!=b.value ? a.value<b.value : a.index<b.index".array;
-    int i1, i2;
-    foreach(i; 0..bs.length-1) {
-        if (bs[i].value == bs[i+1].value) {
-            i1 = bs[i].index.to!int;
-            i2 = bs[i+1].index.to!int;
+    long n;
+    scanln(n);
+    long[] as = readln.split.to!(long[]).map!"a-1".array;
+    long[] bs = (-1L).repeat(n).array;
+    long l, r;
+    foreach(i, a; as) {
+        if (bs[a] >= 0) {
+            l = bs[a];
+            r = i;
         }
+        bs[a] = i;
     }
-    foreach(k; 1..N+1+1) {
-        ModLong ans = comb(N+1, k);
-        if (k <= N-(i2-i1)+1) {
-            ans -= comb(N-(i2-i1), k-1);
-        }
-        ans.writeln;
+
+    foreach(i; 1..n+1+1) {
+        writeln(ModNum.comb(n+1, i) - ModNum.comb(l+(n+1-r-1), i-1));
     }
 }
 
-struct ModNum(T, T mod) if (__traits(isIntegral, T)) {
+alias ModNum = ModNumber!(long, MOD);
+
+struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
+    private enum FACT_MAX = 1000000;
+
     T value;
-    typeof(this) opBinary(string op)(typeof(this) that) if (op=="+" || op=="-" || op=="*") {
-        mixin("return typeof(this)((this.value"~op~"that.value+mod)%mod);");
+    this(T value) {
+        this.value = value;
+        this.value %= MOD;
+        this.value += MOD;
+        this.value %= MOD;
     }
-    typeof(this) opBinary(string op)(typeof(this) that) if (op == "/") {
+
+    ModNumber opAssign(T value) {
+        this.value = value;
+        return this;
+    }
+
+    ModNumber opBinary(string op)(ModNumber that) if (op=="+" || op=="-" || op=="*") {
+        return ModNumber(mixin("(this.value "~op~" that.value + mod) % mod"));
+    }
+    ModNumber opBinary(string op)(T that) if (op=="+" || op=="-" || op=="*") {
+        return ModNumber(mixin("(this.value "~op~" that + mod) % mod"));
+    }
+    ModNumber opBinaryRight(string op)(T that) if (op=="+" || op=="-" || op=="*") {
+        return ModNumber(mixin("(that "~op~" this.value + mod) % mod"));
+    }
+
+    ModNumber opBinary(string op)(ModNumber that) if (op == "/") {
         return this*getReciprocal(that);
     }
-    typeof(this) opBinary(string op)(typeof(this) that) if (op == "^^") {
-        return typeof(this)(modPow(this.value, that.value));
+    ModNumber opBinary(string op)(T that) if (op == "/") {
+        return this*getReciprocal(ModNumber(that));
     }
-    typeof(this) opBinary(string op, S)(S that) if (op == "^^" && __traits(isIntegral, S)) {
-        return typeof(this)(modPow(this.value, that));
+    ModNumber opBinaryRight(string op)(T that) if (op == "/") {
+        return ModNumber(that)*getReciprocal(this);
     }
-    void opOpAssign(string op)(typeof(this) that) if (op=="+" || op=="-" || op=="*" || op=="/") {
-        mixin("this = this" ~op~ "that;");
+
+    ModNumber opBinary(string op)(ModNumber that) if (op == "^^") {
+        return ModNumber(modPow(this.value, that.value));
     }
-    typeof(this) getReciprocal(typeof(this) x) in {
-        debug {
-            assert(isPrime(mod));
-        }
+    ModNumber opBinary(string op)(T that) if (op == "^^") {
+        return ModNumber(modPow(this.value, that));
+    }
+    ModNumber opBinaryRight(string op)(T that) if (op == "^^") {
+        return ModNumber(modPow(that, this.value));
+    }
+
+    void opOpAssign(string op)(ModNumber that) if (op=="+" || op=="-" || op=="*" || op=="/") {
+        this = mixin("this" ~op~ "that");
+    }
+    void opOpAssign(string op)(T that) if (op=="+" || op=="-" || op=="*" || op=="/") {
+        this = mixin("this" ~op~ "that");
+    }
+
+    ModNumber getReciprocal(ModNumber x) in {
+        debug assert(isPrime(mod));
     } body {
-        return typeof(this)(modPow(x.value, mod-2));
+        return ModNumber(modPow(x.value, mod-2));
     }
     T modPow(T base, T power)  {
         T result = 1;
@@ -87,19 +105,12 @@ struct ModNum(T, T mod) if (__traits(isIntegral, T)) {
             if (power & 1) {
                 result = (result * base) % mod;
             }
-            base = base^^2 % mod;
+            base = base*base % mod;
         }
         return result;
     }
-    string toString() {
-        import std.conv;
-        return this.value.to!string;
-    }
-    invariant() {
-        assert(this.value>=0);
-        assert(this.value<mod);
-    }
-    bool isPrime(T n) {
+
+    static bool isPrime(T n) {
         if (n<2) {
             return false;
         } else if (n==2) {
@@ -113,10 +124,128 @@ struct ModNum(T, T mod) if (__traits(isIntegral, T)) {
             return true;
         }
     }
+
+    // n! : 階乗
+    static ModNumber fact(T n) {
+        assert(0<=n && n<=FACT_MAX);
+        static ModNumber[] memo;
+        if (memo.length == 0) memo = new ModNumber[FACT_MAX+1];
+        if (memo[n] != ModNumber.init) {
+            return memo[n];
+        } else {
+            return memo[n] = n==0 ? ModNumber(1) : n*fact(n-1);
+        }
+    }
+
+    // 1/(n!) : 階乗の逆元 (逆元テーブルを用いる)
+    static ModNumber invFact(T n) {
+        assert(0<=n && n<=FACT_MAX);
+        static ModNumber inverse(T n) {
+            assert(1<=n && n<=FACT_MAX);
+            static ModNumber[] memo;
+            if (memo.length == 0) memo = new ModNumber[FACT_MAX+1];
+            if (memo[n] != ModNumber.init) {
+                return memo[n];
+            } else {
+                return memo[n] = n==1 ? ModNumber(1) : ModNumber(-MOD/n)*inverse(MOD%n);
+            }
+        }
+        static ModNumber[] memo;
+        if (memo.length == 0) memo = new ModNumber[FACT_MAX+1];
+        if (memo[n] != ModNumber.init) {
+            return memo[n];
+        } else {
+            return memo[n] = n==0 ? ModNumber(1) : inverse(n)*invFact(n-1);
+        }
+    }
+
+    // {}_n C_r: 組合せ
+    static ModNumber comb(T n, T r) {
+        import std.functional : memoize;
+        if (r<0 || r>n) return ModNumber(0);
+        if (r*2 > n) return comb(n, n-r);
+
+        if (n<=FACT_MAX) {
+            return fact(n) * invFact(r) * invFact(n-r); // 逆元テーブルを使用する
+            // return fact(n) / fact(r) / fact(n-r); // 逆元テーブルを使用しない
+        }
+
+        ModNum mul(T l, T r) {
+            return l>r ? ModNumber(1) : l * memoize!mul(l+1, r);
+        }
+        return memoize!mul(n-r+1, n) / memoize!mul(1, r);
+    }
+
+    // {}_n H_r: 重複組合せ (Homogeneous Combination)
+    static ModNumber hComb(T n, T r) {
+        return comb(n+r-1, r);
+    }
+
+    string toString() {
+        import std.conv;
+        return this.value.to!string;
+    }
+
+    invariant {
+        assert(this.value>=0);
+        assert(this.value<mod);
+    }
 }
 
 
 // ----------------------------------------------
+
+mixin template Constructor() {
+    import std.traits : FieldNameTuple;
+    this(Args...)(Args args) {
+        // static foreach(i, v; args) {
+        foreach(i, v; args) {
+            mixin("this." ~ FieldNameTuple!(typeof(this))[i] ~ "= v;");
+        }
+    }
+}
+
+void scanln(Args...)(auto ref Args args) {
+    import std.meta;
+    template getFormat(T) {
+        static if (isIntegral!T) {
+            enum getFormat = "%d";
+        } else static if (isFloatingPoint!T) {
+            enum getFormat = "%g";
+        } else static if (isSomeString!T || isSomeChar!T) {
+            enum getFormat = "%s";
+        } else {
+            static assert(false);
+        }
+    }
+    enum string str = [staticMap!(getFormat, Args)].join(" ") ~ "\n";
+    // readf!str(args);
+    mixin("str.readf(" ~ Args.length.iota.map!(i => "&args[%d]".format(i)).join(", ") ~ ");");
+}
+
+void times(alias fun)(long n) {
+    // n.iota.each!(i => fun());
+    foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(long n) {
+    // return n.iota.map!(i => fun()).array;
+    T[] res = new T[n];
+    foreach(ref e; res) e = fun();
+    return res;
+}
+
+T ceil(T)(T x, T y) if (__traits(isIntegral, T)) {
+    // `(x+y-1)/y` will only work for positive numbers ...
+    T t = x / y;
+    if (t * y < x) t++;
+    return t;
+}
+
+T floor(T)(T x, T y) if (__traits(isIntegral, T)) {
+    T t = x / y;
+    if (t * y > x) t--;
+    return t;
+}
 
 // fold was added in D 2.071.0
 static if (__VERSION__ < 2071) {
