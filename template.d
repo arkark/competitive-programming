@@ -31,7 +31,7 @@ mixin template Constructor() {
     this(Args...)(Args args) {
         // static foreach(i, v; args) {
         foreach(i, v; args) {
-            mixin("this." ~ FieldNameTuple!(typeof(this))[i] ~ "= v;");
+            mixin("this." ~ FieldNameTuple!(typeof(this))[i]) = v;
         }
     }
 }
