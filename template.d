@@ -65,14 +65,14 @@ auto rep(alias fun, T = typeof(fun()))(long n) {
     return res;
 }
 
-T ceil(T)(T x, T y) if (__traits(isIntegral, T)) {
+T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
     // `(x+y-1)/y` will only work for positive numbers ...
     T t = x / y;
     if (t * y < x) t++;
     return t;
 }
 
-T floor(T)(T x, T y) if (__traits(isIntegral, T)) {
+T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
     T t = x / y;
     if (t * y > x) t--;
     return t;
