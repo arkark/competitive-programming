@@ -6,9 +6,9 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     T value;
     this(T value) {
         this.value = value;
-        this.value %= MOD;
-        this.value += MOD;
-        this.value %= MOD;
+        this.value %= mod;
+        this.value += mod;
+        this.value %= mod;
     }
 
     ModNumber opAssign(T value) {
@@ -106,7 +106,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
             if (memo[n] != ModNumber.init) {
                 return memo[n];
             } else {
-                return memo[n] = n==1 ? ModNumber(1) : ModNumber(-MOD/n)*inverse(MOD%n);
+                return memo[n] = n==1 ? ModNumber(1) : ModNumber(-mod/n)*inverse(mod%n);
             }
         }
         static ModNumber[] memo;
