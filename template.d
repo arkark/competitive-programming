@@ -214,36 +214,152 @@ static if (__VERSION__ < 2072) {
 
 // minElement/maxElement was added in D 2.072.0
 static if (__VERSION__ < 2072) {
-    auto minElement(alias map, Range)(Range r)
-    if (isInputRange!Range && !isInfinite!Range)
+    private auto extremum(alias map, alias selector = "a < b", Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range &&
+        is(typeof(unaryFun!map(ElementType!(Range).init))))
+    in
+    {
+        assert(!r.empty, "r is an empty range");
+    }
+    body
+    {
+        alias Element = ElementType!Range;
+        Unqual!Element seed = r.front;
+        r.popFront();
+        return extremum!(map, selector)(r, seed);
+    }
+
+    private auto extremum(alias map, alias selector = "a < b", Range,
+                          RangeElementType = ElementType!Range)
+                         (Range r, RangeElementType seedElement)
+    if (isInputRange!Range && !isInfinite!Range &&
+        !is(CommonType!(ElementType!Range, RangeElementType) == void) &&
+         is(typeof(unaryFun!map(ElementType!(Range).init))))
     {
         alias mapFun = unaryFun!map;
-        auto element = r.front;
-        auto minimum = mapFun(element);
-        r.popFront;
-        foreach(a; r) {
-            auto b = mapFun(a);
-            if (b < minimum) {
-                element = a;
-                minimum = b;
+        alias selectorFun = binaryFun!selector;
+
+        alias Element = ElementType!Range;
+        alias CommonElement = CommonType!(Element, RangeElementType);
+        Unqual!CommonElement extremeElement = seedElement;
+
+        alias MapType = Unqual!(typeof(mapFun(CommonElement.init)));
+        MapType extremeElementMapped = mapFun(extremeElement);
+
+        // direct access via a random access range is faster
+        static if (isRandomAccessRange!Range)
+        {
+            foreach (const i; 0 .. r.length)
+            {
+                MapType mapElement = mapFun(r[i]);
+                if (selectorFun(mapElement, extremeElementMapped))
+                {
+                    extremeElement = r[i];
+                    extremeElementMapped = mapElement;
+                }
             }
         }
-        return element;
+        else
+        {
+            while (!r.empty)
+            {
+                MapType mapElement = mapFun(r.front);
+                if (selectorFun(mapElement, extremeElementMapped))
+                {
+                    extremeElement = r.front;
+                    extremeElementMapped = mapElement;
+                }
+                r.popFront();
+            }
+        }
+        return extremeElement;
+    }
+    private auto extremum(alias selector = "a < b", Range)(Range r)
+        if (isInputRange!Range && !isInfinite!Range &&
+            !is(typeof(unaryFun!selector(ElementType!(Range).init))))
+    {
+        alias Element = ElementType!Range;
+        Unqual!Element seed = r.front;
+        r.popFront();
+        return extremum!selector(r, seed);
+    }
+    private auto extremum(alias selector = "a < b", Range,
+                          RangeElementType = ElementType!Range)
+                         (Range r, RangeElementType seedElement)
+        if (isInputRange!Range && !isInfinite!Range &&
+            !is(CommonType!(ElementType!Range, RangeElementType) == void) &&
+            !is(typeof(unaryFun!selector(ElementType!(Range).init))))
+    {
+        alias Element = ElementType!Range;
+        alias CommonElement = CommonType!(Element, RangeElementType);
+        Unqual!CommonElement extremeElement = seedElement;
+        alias selectorFun = binaryFun!selector;
+
+        // direct access via a random access range is faster
+        static if (isRandomAccessRange!Range)
+        {
+            foreach (const i; 0 .. r.length)
+            {
+                if (selectorFun(r[i], extremeElement))
+                {
+                    extremeElement = r[i];
+                }
+            }
+        }
+        else
+        {
+            while (!r.empty)
+            {
+                if (selectorFun(r.front, extremeElement))
+                {
+                    extremeElement = r.front;
+                }
+                r.popFront();
+            }
+        }
+        return extremeElement;
+    }
+    auto minElement(Range)(Range r)
+        if (isInputRange!Range && !isInfinite!Range)
+    {
+        return extremum(r);
+    }
+    auto minElement(alias map, Range, RangeElementType = ElementType!Range)
+                   (Range r, RangeElementType seed)
+    if (isInputRange!Range && !isInfinite!Range &&
+        !is(CommonType!(ElementType!Range, RangeElementType) == void))
+    {
+        return extremum!map(r, seed);
+    }
+    auto minElement(Range, RangeElementType = ElementType!Range)
+                   (Range r, RangeElementType seed)
+        if (isInputRange!Range && !isInfinite!Range &&
+            !is(CommonType!(ElementType!Range, RangeElementType) == void))
+    {
+        return extremum(r, seed);
     }
     auto maxElement(alias map, Range)(Range r)
     if (isInputRange!Range && !isInfinite!Range)
     {
-        alias mapFun = unaryFun!map;
-        auto element = r.front;
-        auto maximum = mapFun(element);
-        r.popFront;
-        foreach(a; r) {
-            auto b = mapFun(a);
-            if (b > maximum) {
-                element = a;
-                maximum = b;
-            }
-        }
-        return element;
+        return extremum!(map, "a > b")(r);
+    }
+    auto maxElement(Range)(Range r)
+    if (isInputRange!Range && !isInfinite!Range)
+    {
+        return extremum!`a > b`(r);
+    }
+    auto maxElement(alias map, Range, RangeElementType = ElementType!Range)
+                   (Range r, RangeElementType seed)
+    if (isInputRange!Range && !isInfinite!Range &&
+        !is(CommonType!(ElementType!Range, RangeElementType) == void))
+    {
+        return extremum!(map, "a > b")(r, seed);
+    }
+    auto maxElement(Range, RangeElementType = ElementType!Range)
+                   (Range r, RangeElementType seed)
+    if (isInputRange!Range && !isInfinite!Range &&
+        !is(CommonType!(ElementType!Range, RangeElementType) == void))
+    {
+        return extremum!`a > b`(r, seed);
     }
 }
