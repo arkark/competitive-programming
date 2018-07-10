@@ -21,7 +21,7 @@ enum long INF = long.max/3;
 enum long MOD = 10L^^9+7;
 
 void main() {
-  
+
 }
 
 // ----------------------------------------------
@@ -51,11 +51,15 @@ T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
     return t;
 }
 
-void chmin(T)(ref T lhs, T rhs) {
-  lhs = min(lhs, rhs);
+void ch(alias fun, T, S...)(ref T lhs, S rhs) {
+  lhs = fun(lhs, rhs);
 }
-void chmax(T)(ref T lhs, T rhs) {
-  lhs = max(lhs, rhs);
+unittest {
+  long x = 1000;
+  x.ch!min(2000);
+  assert(x == 1000);
+  x.ch!min(3, 2, 1);
+  assert(x == 1);
 }
 
 mixin template Constructor() {
