@@ -21,10 +21,42 @@ enum long INF = long.max/3;
 enum long MOD = 10L^^9+7;
 
 void main() {
-
+  
 }
 
 // ----------------------------------------------
+
+
+void times(alias fun)(long n) {
+    // n.iota.each!(i => fun());
+    foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(long n) {
+    // return n.iota.map!(i => fun()).array;
+    T[] res = new T[n];
+    foreach(ref e; res) e = fun();
+    return res;
+}
+
+T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+    // `(x+y-1)/y` will only work for positive numbers ...
+    T t = x / y;
+    if (t * y < x) t++;
+    return t;
+}
+
+T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+    T t = x / y;
+    if (t * y > x) t--;
+    return t;
+}
+
+void chmin(T)(ref T lhs, T rhs) {
+  lhs = min(lhs, rhs);
+}
+void chmax(T)(ref T lhs, T rhs) {
+  lhs = max(lhs, rhs);
+}
 
 mixin template Constructor() {
     import std.traits : FieldNameTuple;
@@ -52,30 +84,6 @@ void scanln(Args...)(auto ref Args args) {
     enum string str = [staticMap!(getFormat, Args)].join(" ") ~ "\n";
     // readf!str(args);
     mixin("str.readf(" ~ Args.length.iota.map!(i => "&args[%d]".format(i)).join(", ") ~ ");");
-}
-
-void times(alias fun)(long n) {
-    // n.iota.each!(i => fun());
-    foreach(i; 0..n) fun();
-}
-auto rep(alias fun, T = typeof(fun()))(long n) {
-    // return n.iota.map!(i => fun()).array;
-    T[] res = new T[n];
-    foreach(ref e; res) e = fun();
-    return res;
-}
-
-T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
-    // `(x+y-1)/y` will only work for positive numbers ...
-    T t = x / y;
-    if (t * y < x) t++;
-    return t;
-}
-
-T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
-    T t = x / y;
-    if (t * y > x) t--;
-    return t;
 }
 
 // fold was added in D 2.071.0
