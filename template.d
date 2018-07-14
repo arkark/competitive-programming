@@ -375,3 +375,17 @@ static if (__VERSION__ < 2072) {
         return extremum!`a > b`(r, seed);
     }
 }
+
+// popcnt with ulongs was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+  ulong popcnt(ulong x)
+  {
+      x = (x & 0x5555555555555555L) + (x>> 1 & 0x5555555555555555L);
+      x = (x & 0x3333333333333333L) + (x>> 2 & 0x3333333333333333L);
+      x = (x & 0x0f0f0f0f0f0f0f0fL) + (x>> 4 & 0x0f0f0f0f0f0f0f0fL);
+      x = (x & 0x00ff00ff00ff00ffL) + (x>> 8 & 0x00ff00ff00ff00ffL);
+      x = (x & 0x0000ffff0000ffffL) + (x>>16 & 0x0000ffff0000ffffL);
+      x = (x & 0x00000000ffffffffL) + (x>>32 & 0x00000000ffffffffL);
+      return x;
+  }
+}
