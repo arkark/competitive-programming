@@ -51,8 +51,8 @@ T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
   return t;
 }
 
-void ch(alias fun, T, S...)(ref T lhs, S rhs) {
-  lhs = fun(lhs, rhs);
+ref T ch(alias fun, T, S...)(ref T lhs, S rhs) {
+  return lhs = fun(lhs, rhs);
 }
 unittest {
   long x = 1000;
@@ -60,6 +60,10 @@ unittest {
   assert(x == 1000);
   x.ch!min(3, 2, 1);
   assert(x == 1);
+  x.ch!max(100).ch!min(1000); // clamp
+  assert(x == 100);
+  x.ch!max(0).ch!min(10); // clamp
+  assert(x == 10);
 }
 
 mixin template Constructor() {
