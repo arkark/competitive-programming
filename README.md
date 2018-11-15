@@ -5,12 +5,11 @@
 
 競プロ用リポジトリ
 
-- lib/: ライブラリ
-- src/: ソースコード置き場
-  - AtCoder/:
-    - [@ark012345](https://atcoder.jp/user/ark012345)
-  - ProjectEuler/:
-    - ![](https://projecteuler.net/profile/Ark__.png)
-  - AOJ/
-  - others/
+- lib: ライブラリ
+- src: ソースコード置き場
+  - [AtCoder](https://atcoder.jp/)
+  - [ProjectEuler](https://projecteuler.net/)
+  - [AOJ](http://judge.u-aizu.ac.jp/onlinejudge/)
+  - [HALLab-ProCon](https://www.hallab.co.jp/progcon/)
+  - others
 - template.d: テンプレート
