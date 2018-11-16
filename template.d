@@ -89,9 +89,11 @@ void scanln(Args...)(auto ref Args args) {
       static assert(false);
     }
   }
-  enum string str = [staticMap!(getFormat, Args)].join(" ") ~ "\n";
-  // readf!str(args);
-  mixin("str.readf(" ~ Args.length.iota.map!(i => "&args[%d]".format(i)).join(", ") ~ ");");
+  enum string fmt = [staticMap!(getFormat, Args)].join(" ");
+  string[] inputs = readln.chomp.split;
+  foreach(i, ref v; args) {
+    v = inputs[i].to!(Args[i]);
+  }
 }
 
 // fold was added in D 2.071.0
