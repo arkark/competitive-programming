@@ -129,7 +129,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
       // return fact(n) / fact(r) / fact(n-r); // 逆元テーブルを使用しない
     }
 
-    ModNum mul(T l, T r) {
+    ModNumber mul(T l, T r) {
       return l>r ? ModNumber(1) : l * memoize!mul(l+1, r);
     }
     return memoize!mul(n-r+1, n) / memoize!mul(1, r);
