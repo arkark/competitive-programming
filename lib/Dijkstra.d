@@ -57,7 +57,7 @@ private:
       this.index = index;
       this.cost = cost;
     }
-    override string toString() const {return "";} // dlangの仕様
+    override string toString() const {return "";} // for old compilers
   }
   struct Edge {
     size_t start;
