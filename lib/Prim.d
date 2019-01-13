@@ -49,7 +49,7 @@ private:
     this(size_t index) {
       this.index = index;
     }
-    override string toString() {return "";} //
+    override string toString() const {return "";} // for old compilers
   }
   struct Edge {
     size_t start;
