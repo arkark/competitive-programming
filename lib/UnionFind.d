@@ -45,6 +45,10 @@ public:
     }
   }
 
+  bool isRoot(size_t index) {
+    return _vertices[index].parent == index;
+  }
+
 private:
   struct Vertex {
     size_t index;
