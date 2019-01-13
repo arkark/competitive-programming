@@ -1,8 +1,8 @@
-// RMQ (Range Minimum Query)
+// // RMQ (Range Minimum Query)
 // alias RMQ(T) = SegTree!(T, (a, b) => a<b ? a:b, T.max);
 
 // SegTree (Segment Tree)
-struct SegTree(T, alias fun, T initValue)
+struct SegTree(T, alias fun, T initValue, bool structly = true)
   if (is(typeof(fun(T.init, T.init)) : T)) {
 
 private:
@@ -62,7 +62,7 @@ public:
     }
   }
 
-  // 区間[a, b)でのクエリ (値の取得)
+  // 区間[a, b)でのクエリ (valueの取得)
   // O(logN)
   T query(size_t a, size_t b) {
     return queryRec(a, b, 0, 0, _size).value;
@@ -72,9 +72,19 @@ public:
   // O(logN)
   size_t queryIndex(size_t a, size_t b) out(result) {
     // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-    assert(result != size_t.max);
+    if (structly) assert(result != size_t.max);
   } body {
     return queryRec(a, b, 0, 0, _size).index;
+  }
+
+  // 区間[a, b)でのクエリ ((index, value)の取得)
+  // O(logN)
+  Tuple!(size_t, "index", T, "value") queryPair(size_t a, size_t b) out(result) {
+    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+    if (structly) assert(result.index != size_t.max);
+  } body {
+    Node node = queryRec(a, b, 0, 0, _size);
+    return tuple!("index", "value")(node.index, node.value);
   }
 
   private Node queryRec(size_t a, size_t b, size_t k, size_t l, size_t r) {
