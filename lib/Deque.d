@@ -328,9 +328,9 @@ private:
   // test using phobos
   import std.algorithm, std.array;
   Deque!long xs = [10, 5, 8, 3];
-  assert(xs.sort!("a<b", SwapStrategy.unstable, Deque!long).equal([3, 5, 8, 10]));
+  assert(xs.sort!"a<b"().equal([3, 5, 8, 10]));
   assert(xs == [3, 5, 8, 10]);
-  Deque!long ys = xs.sort!"a>b".array;
+  Deque!long ys = xs.sort!"a>b"().array;
   assert(ys == [10, 8, 5, 3]);
 }
 
