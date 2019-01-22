@@ -4,4 +4,4 @@ d:
   - dmd-2.070.1 # for AtCoder
 script:
   - rdmd -unittest template.d
-  - rdmd -main -unittest Deque.d
+  - rdmd -main -unittest lib/Deque.d
