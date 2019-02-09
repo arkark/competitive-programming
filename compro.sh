@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # ./compro.sh a b
-#  -> create temp/a.d, temp/b.d
+#  -> create dir/a.d, dir/b.d
 
-folderName="temp"
+folderName="dir"
 templateFileName="template.d"
 
 if [ -e $folderName ]; then
