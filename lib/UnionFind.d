@@ -1,19 +1,21 @@
-
 struct UnionFind {
 
 private:
   Vertex[] _vertices;
+  size_t[] _sizes;
 
 public:
-  this(size_t size) {
-    init(size);
+  this(size_t n) {
+    init(n);
   }
 
-  void init(size_t size) {
-    _vertices.length = size;
+  void init(size_t n) {
+    _vertices.length = n;
+    _sizes.length = n;
     foreach(i, ref v; _vertices) {
       v.index = i;
       v.parent = i;
+      _sizes[i] = 1;
     }
   }
 
@@ -24,8 +26,10 @@ public:
   void link(size_t x, size_t y) {
     if (x==y) return;
     if (_vertices[x].rank > _vertices[y].rank) {
+      _sizes[x] += _sizes[y];
       _vertices[y].parent = x;
     } else {
+      _sizes[y] += _sizes[x];
       _vertices[x].parent = y;
       if (_vertices[x].rank == _vertices[y].rank) {
         _vertices[y].rank++;
@@ -47,6 +51,10 @@ public:
 
   bool isRoot(size_t index) {
     return _vertices[index].parent == index;
+  }
+
+  size_t size(size_t index) {
+    return _sizes[findSet(index)];
   }
 
 private:
