@@ -77,22 +77,18 @@ mixin template Constructor() {
 }
 
 void scanln(Args...)(auto ref Args args) {
-  import std.meta;
-  template getFormat(T) {
-    static if (isIntegral!T) {
-      enum getFormat = "%d";
-    } else static if (isFloatingPoint!T) {
-      enum getFormat = "%g";
-    } else static if (isSomeString!T || isSomeChar!T) {
-      enum getFormat = "%s";
-    } else {
-      static assert(false);
-    }
-  }
-  enum string fmt = [staticMap!(getFormat, Args)].join(" ");
-  string[] inputs = readln.chomp.split;
-  foreach(i, ref v; args) {
-    v = inputs[i].to!(Args[i]);
+  enum sep = " ";
+  enum n = Args.length;
+  enum fmt = n.rep!(()=>"%s").join(sep) ~ "\n";
+  static if (__VERSION__ >= 2071) {
+    readf!fmt(args);
+  } else {
+    enum argsTemp = n.iota.map!(
+      i => "&args[%d]".format(i)
+    ).join(", ");
+    mixin(
+      "readf(fmt, " ~ argsTemp ~ ");"
+    );
   }
 }
 
