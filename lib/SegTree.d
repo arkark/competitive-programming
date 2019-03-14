@@ -1,12 +1,13 @@
 // // RMQ (Range Minimum Query)
-// alias RMQ(T) = SegTree!(T, (a, b) => a<b ? a:b, T.max);
+// alias RMQ(T) = SegTree!(T, "a<b ? a:b", T.max);
 
 // SegTree (Segment Tree)
 //    - with 1-based array
 struct SegTree(T, alias fun, T initValue, bool structly = true)
-  if (is(typeof(fun(T.init, T.init)) : T)) {
+  if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
 
 private:
+  alias _fun = binaryFun!fun;
   Pair[] _data;
   size_t _size;
   size_t _l, _r;
@@ -113,7 +114,7 @@ public:
   // }
 
   private Pair select(Pair nl, Pair nr) {
-    T v = fun(nl.value, nr.value);
+    T v = _fun(nl.value, nr.value);
     if (nl.value == v) {
       return nl;
     } else if (nr.value == v) {
