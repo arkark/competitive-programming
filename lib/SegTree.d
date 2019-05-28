@@ -99,7 +99,7 @@ public:
     Pair accr = Pair(size_t.max, initValue);
     for (l += _size, r += _size; l < r; l >>= 1, r >>= 1) {
       if (l&1) accl = select(accl, _data[l++]);
-      if (r&1) accr = select(accr, _data[r-1]);
+      if (r&1) accr = select(_data[r-1], accr);
     }
     return select(accl, accr);
   }
