@@ -1,7 +1,7 @@
 alias ModNum = ModNumber!(long, MOD);
 
 struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
-  private enum FACT_MAX = 1000000;
+  private enum FACT_MAX = 1000010;
 
   T value;
   this(T value) {
@@ -88,12 +88,21 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   static ModNumber fact(T n) {
     assert(0<=n && n<=FACT_MAX);
     static ModNumber[] memo;
-    if (memo.length == 0) memo = new ModNumber[FACT_MAX+1];
-    if (memo[n] != ModNumber.init) {
-      return memo[n];
-    } else {
-      return memo[n] = n==0 ? ModNumber(1) : n*fact(n-1);
+    if (memo.length == 0) {
+      memo = new ModNumber[FACT_MAX+1];
+      memo[0] = ModNumber(1);
+      assert(memo[0] != ModNumber.init);
     }
+    auto acc = ModNumber(1);
+    foreach_reverse(i; 0..n+1) {
+      if (memo[i] != ModNumber.init) {
+        foreach(j; i+1..n+1) {
+          memo[j] = memo[j-1] * j;
+        }
+        return memo[n];
+      }
+    }
+    assert(false);
   }
 
   // 1/(n!) : 階乗の逆元 (逆元テーブルを用いる)
@@ -102,7 +111,9 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     static ModNumber inverse(T n) {
       assert(1<=n && n<=FACT_MAX);
       static ModNumber[] memo;
-      if (memo.length == 0) memo = new ModNumber[FACT_MAX+1];
+      if (memo.length == 0) {
+        memo = new ModNumber[FACT_MAX+1];
+      }
       if (memo[n] != ModNumber.init) {
         return memo[n];
       } else {
@@ -110,12 +121,20 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
       }
     }
     static ModNumber[] memo;
-    if (memo.length == 0) memo = new ModNumber[FACT_MAX+1];
-    if (memo[n] != ModNumber.init) {
-      return memo[n];
-    } else {
-      return memo[n] = n==0 ? ModNumber(1) : inverse(n)*invFact(n-1);
+    if (memo.length == 0) {
+      memo = new ModNumber[FACT_MAX+1];
+      memo[0] = ModNumber(1);
+      assert(memo[0] != ModNumber.init);
     }
+    foreach_reverse(i; 0..n+1) {
+      if (memo[i] != ModNumber.init) {
+        foreach(j; i+1..n+1) {
+          memo[j] = memo[j-1] * inverse(j);
+        }
+        return memo[n];
+      }
+    }
+    assert(false);
   }
 
   // {}_n C_r: 組合せ
