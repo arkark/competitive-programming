@@ -29,14 +29,41 @@ void main() {
     scanln(a, b, c);
     a--; b--;
     vs[a].edges ~= Edge(vs[a], vs[b], -(c - P));
+    vs[b].revEdges ~= Edge(vs[b], vs[a], -1);
   }
+
+  vs.front.reachable = true;
+  void f(Vertex v) {
+    foreach(e; v.edges) {
+      if (!e.end.reachable) {
+        e.end.reachable = true;
+        f(e.end);
+      }
+    }
+  }
+  f(vs.front);
+  assert(vs.back.reachable);
+
+  vs.back.revReachable = true;
+  void g(Vertex v) {
+    foreach(e; v.revEdges) {
+      if (!e.end.revReachable) {
+        e.end.revReachable = true;
+        g(e.end);
+      }
+    }
+  }
+  g(vs.back);
+  assert(vs.front.revReachable);
 
   vs.each!(v => v.dist = INF);
-  vs[0].dist = 0;
+  vs.front.dist = 0;
 
   foreach(_; 0..N) {
     foreach(v; vs) {
+      if (!v.reachable || !v.revReachable) continue;
       foreach(e; v.edges) {
+        if (!e.end.reachable || !e.end.revReachable) continue;
         long d = e.begin.dist + e.w;
         if (d < e.end.dist) {
           e.end.dist = d;
@@ -45,31 +72,28 @@ void main() {
     }
   }
 
-  long lastD = vs.back.dist;
-
-  foreach(_; 0..N) {
-    foreach(v; vs) {
-      foreach(e; v.edges) {
-        long d = e.begin.dist + e.w;
-        if (d < e.end.dist) {
-          e.end.dist = d;
-        }
+  foreach(v; vs) {
+    if (!v.reachable || !v.revReachable) continue;
+    foreach(e; v.edges) {
+        if (!e.end.reachable || !e.end.revReachable) continue;
+      long d = e.begin.dist + e.w;
+      if (d < e.end.dist) {
+        writeln(-1);
+        return;
       }
     }
   }
 
-  if (vs.back.dist < lastD) {
-    writeln(-1);
-    return;
-  }
-
-  writeln(max(0, -lastD));
+  writeln(max(0, -vs.back.dist));
 }
 
 class Vertex {
   long index;
   Edge[] edges;
+  Edge[] revEdges;
   long dist;
+  bool reachable = false;
+  bool revReachable = false;
   mixin Constructor;
 }
 
