@@ -6,7 +6,7 @@
   long[] as = ...;
   long[] bs = ...;
 
-  long[] cs = Ntt.mul(as, bs); // -> 多項式の積 as * bs mod t
+  long[] cs = Ntt.mul(as, bs, t); // -> 多項式の積 as * bs mod t
 */
 struct Ntt {
   private {
