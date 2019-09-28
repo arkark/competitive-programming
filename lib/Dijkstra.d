@@ -1,6 +1,5 @@
-// ダイクストラ法
+// Dijkstra's algorithm
 // O((V+E)logV)
-// 辺の重みが非負数の場合の単一始点最短経路
 struct Dijkstra(T) {
   import std.algorithm;
   import std.container; // rbtree
