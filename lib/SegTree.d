@@ -1,7 +1,7 @@
 // // RMQ (Range Minimum Query)
 // alias RMQ(T) = SegTree!(T, "a<b ? a:b", T.max);
 
-// SegTree (Segment Tree)
+// Segment Tree
 //    - with 1-based array
 struct SegTree(T, alias fun, T initValue, bool structly = true)
   if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
@@ -13,16 +13,16 @@ private:
   size_t _l, _r;
 
 public:
-  // size ... データ数
-  // initValue ... 初期値(例えばRMQだとINF)
+
+  // size: データ数
   this(size_t size) {
     init(size);
   }
 
   // 配列で指定
-  this(T[] ary) {
-    init(ary.length);
-    update(ary);
+  this(T[] xs) {
+    init(xs.length);
+    update(xs);
   }
 
   // O(N)
@@ -78,7 +78,6 @@ public:
     if (structly) assert(result != size_t.max);
   } body {
     Pair pair = accumulate(a, b);
-    // Pair pair = queryRec(a, b, 0, 0, _size);
     return pair.index;
   }
 
@@ -93,37 +92,6 @@ public:
     return pair;
   }
 
-  private Pair accumulate(size_t l, size_t r) {
-    if (r<=_l || _r<=l) return Pair(size_t.max, initValue);
-    Pair accl = Pair(size_t.max, initValue);
-    Pair accr = Pair(size_t.max, initValue);
-    for (l += _size, r += _size; l < r; l >>= 1, r >>= 1) {
-      if (l&1) accl = select(accl, _data[l++]);
-      if (r&1) accr = select(_data[r-1], accr);
-    }
-    return select(accl, accr);
-  }
-
-  // private Pair queryRec(size_t a, size_t b, size_t k, size_t l, size_t r) {
-  //   if (b<=l || r<=a) return Pair(size_t.max, initValue);
-  //   if (a<=l && r<=b) return _data[k];
-  //   size_t c = (l+r)/2;
-  //   Pair nl = queryRec(a, b, k*2+0, l, c);
-  //   Pair nr = queryRec(a, b, k*2+1, c, r);
-  //   return select(nl, nr);
-  // }
-
-  private Pair select(Pair nl, Pair nr) {
-    T v = _fun(nl.value, nr.value);
-    if (nl.value == v) {
-      return nl;
-    } else if (nr.value == v) {
-      return nr;
-    } else {
-      return Pair(size_t.max, v);
-    }
-  }
-
   // O(1)
   T get(size_t i) {
     return _data[_size + i].value;
@@ -134,8 +102,32 @@ public:
     return _data[_l+_size.._r+_size].map!"a.value".array;
   }
 
+private:
+
   struct Pair {
     size_t index;
     T value;
+  }
+
+  Pair select(Pair nl, Pair nr) {
+    T v = _fun(nl.value, nr.value);
+    if (nl.value == v) {
+      return nl;
+    } else if (nr.value == v) {
+      return nr;
+    } else {
+      return Pair(size_t.max, v);
+    }
+  }
+
+  Pair accumulate(size_t l, size_t r) {
+    if (r<=_l || _r<=l) return Pair(size_t.max, initValue);
+    Pair accl = Pair(size_t.max, initValue);
+    Pair accr = Pair(size_t.max, initValue);
+    for (l += _size, r += _size; l < r; l >>= 1, r >>= 1) {
+      if (l&1) accl = select(accl, _data[l++]);
+      if (r&1) accr = select(_data[r-1], accr);
+    }
+    return select(accl, accr);
   }
 }
