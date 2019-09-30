@@ -64,21 +64,9 @@ private:
   size_t _size;
   Node _root;
 
-  T query(size_t a, size_t b, Node node, size_t l, size_t r) {
-    if (r <= a || b <= l) {
-      return initValue;
-    }
-    if (a <= l && r <= b) {
-      return node.value;
-    }
-
-    T lv = node.left is null ? initValue : query(a, b, node.left, l, (l + r)>>1);
-    T rv = node.right is null ? initValue : query(a, b, node.right, (l + r)>>1, r);
-    return _fun(lv, rv);
-  }
-
 public:
 
+  // size: データ数
   this(size_t size) {
     _size = 1;
     while(_size < size) {
@@ -87,7 +75,67 @@ public:
     _root = new Node();
   }
 
+  // i番目の要素をxに変更
+  // O(logN)
   void update(size_t i, T x) {
+    Node node = getLeafNode(i);
+    node.pair = Pair(i, x);
+    while(node !is _root) {
+      Node parent = node.parent;
+      Pair pl = parent.left is null ? Pair() : parent.left.pair;
+      Pair pr = parent.right is null ? Pair() : parent.right.pair;
+      parent.pair = select(pl, pr);
+      node = parent;
+    }
+  }
+
+  // 区間[a, b)でのクエリ (valueの取得)
+  // O(logN)
+  T query(size_t a, size_t b) {
+    return queryPair(a, b, _root, 0, _size).value;
+  }
+
+  // 区間[a, b)でのクエリ (indexの取得)
+  // O(logN)
+  size_t queryIndex(size_t a, size_t b) out(result) {
+    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+    if (structly) assert(result != size_t.max);
+  } body {
+    return queryPair(a, b, _root, 0, _size).index;
+  }
+
+  // 区間[a, b)でのクエリ ((index, value)の取得)
+  // O(logN)
+  Pair queryPair(size_t a, size_t b) out(result) {
+    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+    if (structly) assert(result.index != size_t.max);
+  } body {
+    return queryPair(a, b, _root, 0, _size);
+  }
+
+  // O(logN)
+  T get(size_t i) {
+    return getLeafNode(i).pair.value;
+  }
+
+private:
+  struct Pair {
+    size_t index = size_t.max;
+    T value = initValue;
+  }
+
+  class Node {
+    Node parent;
+    Node left, right;
+    Pair pair = Pair();
+    this() {
+    }
+    this(Node parent) {
+      this.parent = parent;
+    }
+  }
+
+  Node getLeafNode(size_t i) {
     Node node = _root;
     size_t l = 0;
     size_t r = _size;
@@ -107,34 +155,31 @@ public:
         l = c;
       }
     }
-    assert(node.left is null && node.right is null);
-    node.value = x;
-    while(node !is _root) {
-      Node parent = node.parent;
-      assert((parent.left is node) != (parent.right is node));
-      T lv = parent.left is null ? initValue : parent.left.value;
-      T rv = parent.right is null ? initValue : parent.right.value;
-      parent.value = _fun(lv, rv);
-      node = parent;
+    return node;
+  }
+
+  Pair select(Pair pl, Pair pr) {
+    T v = _fun(pl.value, pr.value);
+    if (pl.value == v) {
+      return pl;
+    } else if (pr.value == v) {
+      return pr;
+    } else {
+      return Pair(size_t.max, v);
     }
   }
 
-  T query(size_t a, size_t b) in {
-    assert(0 <= a && a <= b && b <= _size);
-  } body {
-    return query(a, b, _root, 0, _size);
-  }
+  Pair queryPair(size_t a, size_t b, Node node, size_t l, size_t r) {
+    if (r <= a || b <= l) {
+      return Pair();
+    }
+    if (a <= l && r <= b) {
+      return node.pair;
+    }
 
-private:
-  class Node {
-    Node parent;
-    Node left, right;
-    T value = initValue;
-    this() {
-    }
-    this(Node parent) {
-      this.parent = parent;
-    }
+    Pair pl = node.left is null ? Pair() : queryPair(a, b, node.left, l, (l + r)>>1);
+    Pair pr = node.right is null ? Pair() : queryPair(a, b, node.right, (l + r)>>1, r);
+    return select(pl, pr);
   }
 }
 
