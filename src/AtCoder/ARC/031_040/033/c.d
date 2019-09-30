@@ -17,369 +17,262 @@ import std.uni;
 import core.bitop : popcnt;
 alias Generator = std.concurrency.Generator;
 
-const long INF = long.max/3;
-const long MOD = 10L^^9+7;
+enum long INF = long.max/5;
+enum long MOD = 10L^^9+7;
 
 void main() {
-    int Q;
-    scanln(Q);
-
-    int K = 200000;
-    auto seg = SegTree!(int, (a, b)=>a+b, 0)(K+1);
-
-    void f1(int x) {
-        seg.update(x, seg.get(x) + 1);
-    }
-    int f2(int x) {
-        int l=-1;
-        int r=K;
-        while(r-l>1) {
-            int c = (l+r).ceil(2);
-            int y = seg.query(0, c+1);
-            if (y < x) {
-                l = c;
-            } else {
-                r = c;
-            }
-        }
-        seg.update(r, seg.get(r) - 1);
-        return r;
-    }
-
-    foreach(i; 0..Q) {
-        int t, x;
-        scanln(t, x);
-        if (t == 1) {
-            f1(x);
+  long Q;
+  scanln(Q);
+  long T = 200000;
+  auto seg = SegTree!(long, "a+b", 0)(T+1);
+  foreach(i; 0..Q) {
+    long t, x;
+    scanln(t, x);
+    if (t == 1) {
+      seg.update(x, 1);
+    } else {
+      long l = 0;
+      long r = T+1;
+      while(r-l > 1) {
+        long c = (l + r)/2;
+        long v = seg.query(0, c);
+        if (v >= x) {
+          r = c;
         } else {
-            f2(x).writeln;
+          l = c;
         }
+      }
+      assert(seg.get(l) == 1);
+      seg.update(l, 0);
+      writeln(l);
     }
+  }
 }
 
-// SegTree (Segment Tree)
-struct SegTree(T, alias fun, T initValue)
-    if (is(typeof(fun(T.init, T.init)) : T)) {
+// // RMQ (Range Minimum Query)
+// alias RMQ(T) = SegTree!(T, "a<b ? a:b", T.max);
+
+// Segment Tree
+//    - with 1-based array
+struct SegTree(T, alias fun, T initValue, bool structly = true)
+  if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
 
 private:
-    Node[] _data;
-    size_t _size;
-    size_t _l, _r;
+  alias _fun = binaryFun!fun;
+  Pair[] _data;
+  size_t _size;
+  size_t _l, _r;
 
 public:
-    // size ... データ数
-    // initValue ... 初期値(例えばRMQだとINF)
-    this(size_t size) {
-        init(size);
-    }
 
-    // 配列で指定
-    this(T[] ary) {
-        init(ary.length);
-        update(ary);
-    }
+  // size: データ数
+  this(size_t size) {
+    init(size);
+  }
 
-    // O(N)
-    void init(size_t size){
-        _size = 1;
-        while(_size < size) {
-            _size *= 2;
-        }
-        _data.length = _size*2-1;
-        _data[] = Node(size_t.max, initValue);
-        _l = 0;
-        _r = size;
-    }
+  // 配列で指定
+  this(T[] xs) {
+    init(xs.length);
+    update(xs);
+  }
 
-    // i番目の要素をxに変更
-    // O(logN)
-    void update(size_t i, T x) {
-        size_t index = i;
-        i += _size-1;
-        _data[i] = Node(index, x);
-        while(i > 0) {
-            i = (i-1)/2;
-            Node nl = _data[i*2+1];
-            Node nr = _data[i*2+2];
-            _data[i] = select(nl, nr);
-        }
+  // O(N)
+  void init(size_t size){
+    _size = 1;
+    while(_size < size) {
+      _size *= 2;
     }
+    _data.length = _size*2;
+    _data[] = Pair(size_t.max, initValue);
+    _l = 0;
+    _r = size;
+  }
 
-    // 配列で指定
-    // O(N)
-    void update(T[] ary) {
-        foreach(i, e; ary) {
-            _data[i+_size-1] = Node(i, e);
-        }
-        foreach(i; (_size-1).iota.retro) {
-            Node nl = _data[i*2+1];
-            Node nr = _data[i*2+2];
-            _data[i] = select(nl, nr);
-        }
+  // i番目の要素をxに変更
+  // O(logN)
+  void update(size_t i, T x) {
+    size_t index = i;
+    _data[i += _size] = Pair(index, x);
+    while(i > 0) {
+      i >>= 1;
+      Pair nl = _data[i*2+0];
+      Pair nr = _data[i*2+1];
+      _data[i] = select(nl, nr);
     }
+  }
 
-    // 区間[a, b)でのクエリ (値の取得)
-    // O(logN)
-    T query(size_t a, size_t b) {
-        return queryRec(a, b, 0, 0, _size).value;
+  // 配列で指定
+  // O(N)
+  void update(T[] ary) {
+    foreach(i, e; ary) {
+      _data[i+_size] = Pair(i, e);
     }
+    foreach_reverse(i; 1.._size) {
+      Pair nl = _data[i*2+0];
+      Pair nr = _data[i*2+1];
+      _data[i] = select(nl, nr);
+    }
+  }
 
-    // 区間[a, b)でのクエリ (indexの取得)
-    // O(logN)
-    size_t queryIndex(size_t a, size_t b) out(result) {
-        // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-        assert(result != size_t.max);
-    } body {
-        return queryRec(a, b, 0, 0, _size).index;
-    }
+  // 区間[a, b)でのクエリ (valueの取得)
+  // O(logN)
+  T query(size_t a, size_t b) {
+    Pair pair = accumulate(a, b);
+    // Pair pair = queryRec(a, b, 0, 0, _size);
+    return pair.value;
+  }
 
-    private Node queryRec(size_t a, size_t b, size_t k, size_t l, size_t r) {
-        if (b<=l || r<=a) return Node(size_t.max, initValue);
-        if (a<=l && r<=b) return _data[k];
-        Node nl = queryRec(a, b, k*2+1, l, (l+r)/2);
-        Node nr = queryRec(a, b, k*2+2, (l+r)/2, r);
-        return select(nl, nr);
-    }
+  // 区間[a, b)でのクエリ (indexの取得)
+  // O(logN)
+  size_t queryIndex(size_t a, size_t b) out(result) {
+    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+    if (structly) assert(result != size_t.max);
+  } body {
+    Pair pair = accumulate(a, b);
+    return pair.index;
+  }
 
-    private Node select(Node nl, Node nr) {
-        T v = fun(nl.value, nr.value);
-        if (nl.value == v) {
-            return nl;
-        } else if (nr.value == v) {
-            return nr;
-        } else {
-            return Node(size_t.max, v);
-        }
-    }
+  // 区間[a, b)でのクエリ ((index, value)の取得)
+  // O(logN)
+  Pair queryPair(size_t a, size_t b) out(result) {
+    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+    if (structly) assert(result.index != size_t.max);
+  } body {
+    Pair pair = accumulate(a, b);
+    // Pair pair = queryRec(a, b, 0, 0, _size);
+    return pair;
+  }
 
-    // O(1)
-    T get(size_t i) {
-        return _data[_size-1 + i].value;
-    }
+  // O(1)
+  T get(size_t i) {
+    return _data[_size + i].value;
+  }
 
-    // O(N)
-    T[] array() {
-        return _data[_l+_size-1.._r+_size-1].map!"a.value".array;
-    }
+  // O(N)
+  T[] array() {
+    return _data[_l+_size.._r+_size].map!"a.value".array;
+  }
 
 private:
-    struct Node {
-        size_t index;
-        T value;
-    }
-}
 
+  struct Pair {
+    size_t index;
+    T value;
+  }
+
+  Pair select(Pair nl, Pair nr) {
+    T v = _fun(nl.value, nr.value);
+    if (nl.value == v) {
+      return nl;
+    } else if (nr.value == v) {
+      return nr;
+    } else {
+      return Pair(size_t.max, v);
+    }
+  }
+
+  Pair accumulate(size_t l, size_t r) {
+    if (r<=_l || _r<=l) return Pair(size_t.max, initValue);
+    Pair accl = Pair(size_t.max, initValue);
+    Pair accr = Pair(size_t.max, initValue);
+    for (l += _size, r += _size; l < r; l >>= 1, r >>= 1) {
+      if (l&1) accl = select(accl, _data[l++]);
+      if (r&1) accr = select(_data[r-1], accr);
+    }
+    return select(accl, accr);
+  }
+}
 
 // ----------------------------------------------
 
-void scanln(Args...)(auto ref Args args) {
-    import std.meta;
-    template getFormat(T) {
-        static if (isIntegral!T) {
-            enum getFormat = "%d";
-        } else static if (isFloatingPoint!T) {
-            enum getFormat = "%g";
-        } else static if (isSomeString!T || isSomeChar!T) {
-            enum getFormat = "%s";
-        } else {
-            static assert(false);
-        }
+
+void times(alias fun)(long n) {
+  // n.iota.each!(i => fun());
+  foreach(i; 0..n) fun();
+}
+auto rep(alias fun, T = typeof(fun()))(long n) {
+  // return n.iota.map!(i => fun()).array;
+  T[] res = new T[n];
+  foreach(ref e; res) e = fun();
+  return res;
+}
+
+T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+  // `(x+y-1)/y` will only work for positive numbers ...
+  T t = x / y;
+  if (t * y < x) t++;
+  return t;
+}
+
+T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+  T t = x / y;
+  if (t * y > x) t--;
+  return t;
+}
+
+ref T ch(alias fun, T, S...)(ref T lhs, S rhs) {
+  return lhs = fun(lhs, rhs);
+}
+unittest {
+  long x = 1000;
+  x.ch!min(2000);
+  assert(x == 1000);
+  x.ch!min(3, 2, 1);
+  assert(x == 1);
+  x.ch!max(100).ch!min(1000); // clamp
+  assert(x == 100);
+  x.ch!max(0).ch!min(10); // clamp
+  assert(x == 10);
+}
+
+mixin template Constructor() {
+  import std.traits : FieldNameTuple;
+  this(Args...)(Args args) {
+    // static foreach(i, v; args) {
+    foreach(i, v; args) {
+      mixin("this." ~ FieldNameTuple!(typeof(this))[i]) = v;
     }
-    enum string str = [staticMap!(getFormat, Args)].join(" ") ~ "\n";
-    // readf!str(args);
-    mixin("str.readf(" ~ Args.length.iota.map!(i => "&args[%d]".format(i)).join(", ") ~ ");");
+  }
 }
 
-void times(alias fun)(int n) {
-    // n.iota.each!(i => fun());
-    foreach(i; 0..n) fun();
-}
-auto rep(alias fun, T = typeof(fun()))(int n) {
-    // return n.iota.map!(i => fun()).array;
-    T[] res = new T[n];
-    foreach(ref e; res) e = fun();
-    return res;
-}
-
-T ceil(T)(T x, T y) if (__traits(isIntegral, T)) {
-    // `(x+y-1)/y` will only work for positive numbers ...
-    T t = x / y;
-    if (t * y < x) t++;
-    return t;
-}
-
-T floor(T)(T x, T y) if (__traits(isIntegral, T)) {
-    T t = x / y;
-    if (t * y > x) t--;
-    return t;
+void scanln(Args...)(auto ref Args args) {
+  enum sep = " ";
+  enum n = Args.length;
+  enum fmt = n.rep!(()=>"%s").join(sep) ~ "\n";
+  static if (__VERSION__ >= 2071) {
+    readf!fmt(args);
+  } else {
+    enum argsTemp = n.iota.map!(
+      i => "&args[%d]".format(i)
+    ).join(", ");
+    mixin(
+      "readf(fmt, " ~ argsTemp ~ ");"
+    );
+  }
 }
 
 // fold was added in D 2.071.0
 static if (__VERSION__ < 2071) {
-    template fold(fun...) if (fun.length >= 1) {
-        auto fold(R, S...)(R r, S seed) {
-            static if (S.length < 2) {
-                return reduce!fun(seed, r);
-            } else {
-                return reduce!fun(tuple(seed), r);
-            }
-        }
+  template fold(fun...) if (fun.length >= 1) {
+    auto fold(R, S...)(R r, S seed) {
+      static if (S.length < 2) {
+        return reduce!fun(seed, r);
+      } else {
+        return reduce!fun(tuple(seed), r);
+      }
     }
+  }
 }
 
-// cumulativeFold was added in D 2.072.0
-static if (__VERSION__ < 2072) {
-    template cumulativeFold(fun...)
-    if (fun.length >= 1)
-    {
-        import std.meta : staticMap;
-        private alias binfuns = staticMap!(binaryFun, fun);
-
-        auto cumulativeFold(R)(R range)
-        if (isInputRange!(Unqual!R))
-        {
-            return cumulativeFoldImpl(range);
-        }
-
-        auto cumulativeFold(R, S)(R range, S seed)
-        if (isInputRange!(Unqual!R))
-        {
-            static if (fun.length == 1)
-                return cumulativeFoldImpl(range, seed);
-            else
-                return cumulativeFoldImpl(range, seed.expand);
-        }
-
-        private auto cumulativeFoldImpl(R, Args...)(R range, ref Args args)
-        {
-            import std.algorithm.internal : algoFormat;
-
-            static assert(Args.length == 0 || Args.length == fun.length,
-                algoFormat("Seed %s does not have the correct amount of fields (should be %s)",
-                    Args.stringof, fun.length));
-
-            static if (args.length)
-                alias State = staticMap!(Unqual, Args);
-            else
-                alias State = staticMap!(ReduceSeedType!(ElementType!R), binfuns);
-
-            foreach (i, f; binfuns)
-            {
-                static assert(!__traits(compiles, f(args[i], e)) || __traits(compiles,
-                        { args[i] = f(args[i], e); }()),
-                    algoFormat("Incompatible function/seed/element: %s/%s/%s",
-                        fullyQualifiedName!f, Args[i].stringof, E.stringof));
-            }
-
-            static struct Result
-            {
-            private:
-                R source;
-                State state;
-
-                this(R range, ref Args args)
-                {
-                    source = range;
-                    if (source.empty)
-                        return;
-
-                    foreach (i, f; binfuns)
-                    {
-                        static if (args.length)
-                            state[i] = f(args[i], source.front);
-                        else
-                            state[i] = source.front;
-                    }
-                }
-
-            public:
-                @property bool empty()
-                {
-                    return source.empty;
-                }
-
-                @property auto front()
-                {
-                    assert(!empty, "Attempting to fetch the front of an empty cumulativeFold.");
-                    static if (fun.length > 1)
-                    {
-                        import std.typecons : tuple;
-                        return tuple(state);
-                    }
-                    else
-                    {
-                        return state[0];
-                    }
-                }
-
-                void popFront()
-                {
-                    assert(!empty, "Attempting to popFront an empty cumulativeFold.");
-                    source.popFront;
-
-                    if (source.empty)
-                        return;
-
-                    foreach (i, f; binfuns)
-                        state[i] = f(state[i], source.front);
-                }
-
-                static if (isForwardRange!R)
-                {
-                    @property auto save()
-                    {
-                        auto result = this;
-                        result.source = source.save;
-                        return result;
-                    }
-                }
-
-                static if (hasLength!R)
-                {
-                    @property size_t length()
-                    {
-                        return source.length;
-                    }
-                }
-            }
-
-            return Result(range, args);
-        }
-    }
-}
-
-// minElement/maxElement was added in D 2.072.0
-static if (__VERSION__ < 2072) {
-    auto minElement(alias map, Range)(Range r)
-    if (isInputRange!Range && !isInfinite!Range)
-    {
-        alias mapFun = unaryFun!map;
-        auto element = r.front;
-        auto minimum = mapFun(element);
-        r.popFront;
-        foreach(a; r) {
-            auto b = mapFun(a);
-            if (b < minimum) {
-                element = a;
-                minimum = b;
-            }
-        }
-        return element;
-    }
-    auto maxElement(alias map, Range)(Range r)
-    if (isInputRange!Range && !isInfinite!Range)
-    {
-        alias mapFun = unaryFun!map;
-        auto element = r.front;
-        auto maximum = mapFun(element);
-        r.popFront;
-        foreach(a; r) {
-            auto b = mapFun(a);
-            if (b > maximum) {
-                element = a;
-                maximum = b;
-            }
-        }
-        return element;
-    }
+// popcnt with ulongs was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+  ulong popcnt(ulong x) {
+    x = (x & 0x5555555555555555L) + (x>> 1 & 0x5555555555555555L);
+    x = (x & 0x3333333333333333L) + (x>> 2 & 0x3333333333333333L);
+    x = (x & 0x0f0f0f0f0f0f0f0fL) + (x>> 4 & 0x0f0f0f0f0f0f0f0fL);
+    x = (x & 0x00ff00ff00ff00ffL) + (x>> 8 & 0x00ff00ff00ff00ffL);
+    x = (x & 0x0000ffff0000ffffL) + (x>>16 & 0x0000ffff0000ffffL);
+    x = (x & 0x00000000ffffffffL) + (x>>32 & 0x00000000ffffffffL);
+    return x;
+  }
 }
