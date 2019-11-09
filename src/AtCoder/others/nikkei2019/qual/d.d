@@ -24,164 +24,83 @@ void main() {
   long N, M;
   scanln(N, M);
 
-  struct P {
+  auto dij = Dijkstra!long(N);
+  foreach(i; 0..N-1) {
+    dij.addEdge(i+1, i, 0);
+  }
+  foreach(_; 0..M) {
     long l, r, c;
+    scanln(l, r, c);
+    l--; r--;
+    dij.addEdge(l, r, c);
   }
-  P[] ps = new P[M];
-  foreach(i; 0..M) {
-    scanln(ps[i].l, ps[i].r, ps[i].c);
-    ps[i].l--;
-    ps[i].r--;
-  }
-  ps.sort!"a.l != b.l ? a.l < b.l : a.c != a.c ? a.c < b.c : a.r > a.r";
-
-  auto seg = SegTree!(long, "a<b?a:b", INF)(N);
-  seg.update(0, 0);
-
-  foreach(p; ps) {
-    seg.update(p.l+1, min(seg.get(p.l+1), seg.get(p.l) + p.c));
-    seg.update(p.r, min(seg.get(p.r), seg.query(p.l, p.r) + p.c));
-  }
-
-  long ans = seg.get(N-1);
-  if (ans >= INF) {
-    writeln(-1);
-  } else {
-    ans.writeln;
-  }
+  dij.solve(0).back.pipe!(a => a>=INF?-1L:a).writeln;
 }
 
-// // RMQ (Range Minimum Query)
-// alias RMQ(T) = SegTree!(T, "a<b ? a:b", T.max);
-
-// Segment Tree
-//    - with 1-based array
-struct SegTree(T, alias fun, T initValue, bool structly = true)
-  if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
-
+// Dijkstra's algorithm
+// O((V+E)logV)
+struct Dijkstra(T) {
+  import std.algorithm;
+  import std.container; // rbtree
 private:
-  alias _fun = binaryFun!fun;
-  Pair[] _data;
-  size_t _size;
-  size_t _l, _r;
+  Vertex[] _vertices;
 
 public:
-
-  // size: データ数
-  this(size_t size) {
-    init(size);
-  }
-
-  // 配列で指定
-  this(T[] xs) {
-    init(xs.length);
-    update(xs);
-  }
-
-  // O(N)
-  void init(size_t size){
-    _size = 1;
-    while(_size < size) {
-      _size *= 2;
-    }
-    _data.length = _size*2;
-    _data[] = Pair(size_t.max, initValue);
-    _l = 0;
-    _r = size;
-  }
-
-  // i番目の要素をxに変更
-  // O(logN)
-  void update(size_t i, T x) {
-    size_t index = i;
-    _data[i += _size] = Pair(index, x);
-    while(i > 0) {
-      i >>= 1;
-      Pair nl = _data[i*2+0];
-      Pair nr = _data[i*2+1];
-      _data[i] = select(nl, nr);
+  this(size_t size, T inf = T.max) {
+    _vertices.length = size;
+    foreach(i; 0..size) {
+      _vertices[i] = new Vertex(i, inf);
     }
   }
 
-  // 配列で指定
-  // O(N)
-  void update(T[] ary) {
-    foreach(i, e; ary) {
-      _data[i+_size] = Pair(i, e);
+  void addEdge(size_t start, size_t end, T weight) {
+    _vertices[start].edges ~= Edge(start, end, weight);
+  }
+
+  void addEdge(T[] input) {
+    addEdge(cast(size_t) input[0], cast(size_t) input[1], input[2]);
+  }
+
+  T[] solve(size_t start, size_t end = -1) {
+    _vertices[start].cost = 0;
+    auto rbtree = redBlackTree!"a.cost==b.cost ? a.index<b.index : a.cost<b.cost"(_vertices[start]);
+    while(!rbtree.empty) {
+      Vertex v = rbtree.front;
+      if (v.index == end) break;
+      v.flag = true;
+      rbtree.removeFront;
+      v.edges.each!((Edge e) {
+        if (_vertices[e.end].flag) return;
+        if (v.cost+e.weight < _vertices[e.end].cost) {
+          rbtree.removeKey(_vertices[e.end]);
+          _vertices[e.end].cost = v.cost+e.weight;
+          rbtree.insert(_vertices[e.end]);
+        }
+      });
     }
-    foreach_reverse(i; 1.._size) {
-      Pair nl = _data[i*2+0];
-      Pair nr = _data[i*2+1];
-      _data[i] = select(nl, nr);
-    }
+    return _vertices.map!(v => v.cost).array;
   }
 
-  // 区間[a, b)でのクエリ (valueの取得)
-  // O(logN)
-  T query(size_t a, size_t b) {
-    Pair pair = accumulate(a, b);
-    // Pair pair = queryRec(a, b, 0, 0, _size);
-    return pair.value;
-  }
-
-  // 区間[a, b)でのクエリ (indexの取得)
-  // O(logN)
-  size_t queryIndex(size_t a, size_t b) out(result) {
-    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-    if (structly) assert(result != size_t.max);
-  } body {
-    Pair pair = accumulate(a, b);
-    return pair.index;
-  }
-
-  // 区間[a, b)でのクエリ ((index, value)の取得)
-  // O(logN)
-  Pair queryPair(size_t a, size_t b) out(result) {
-    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-    if (structly) assert(result.index != size_t.max);
-  } body {
-    Pair pair = accumulate(a, b);
-    // Pair pair = queryRec(a, b, 0, 0, _size);
-    return pair;
-  }
-
-  // O(1)
-  T get(size_t i) {
-    return _data[_size + i].value;
-  }
-
-  // O(N)
-  T[] array() {
-    return _data[_l+_size.._r+_size].map!"a.value".array;
+  Vertex[] getVertices() {
+    return _vertices;
   }
 
 private:
-
-  struct Pair {
+  class Vertex {
     size_t index;
-    T value;
-  }
-
-  Pair select(Pair nl, Pair nr) {
-    T v = _fun(nl.value, nr.value);
-    if (nl.value == v) {
-      return nl;
-    } else if (nr.value == v) {
-      return nr;
-    } else {
-      return Pair(size_t.max, v);
+    bool flag;
+    T cost;
+    Edge[] edges = [];
+    this(size_t index, T cost) {
+      this.index = index;
+      this.cost = cost;
     }
+    override string toString() const {return "";} // for old compilers
   }
-
-  Pair accumulate(size_t l, size_t r) {
-    if (r<=_l || _r<=l) return Pair(size_t.max, initValue);
-    Pair accl = Pair(size_t.max, initValue);
-    Pair accr = Pair(size_t.max, initValue);
-    for (l += _size, r += _size; l < r; l >>= 1, r >>= 1) {
-      if (l&1) accl = select(accl, _data[l++]);
-      if (r&1) accr = select(_data[r-1], accr);
-    }
-    return select(accl, accr);
+  struct Edge {
+    size_t start;
+    size_t end;
+    T weight;
   }
 }
 
