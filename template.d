@@ -41,13 +41,15 @@ auto rep(alias fun, T = typeof(fun()))(long n) {
 T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
   // `(x+y-1)/y` will only work for positive numbers ...
   T t = x / y;
-  if (t * y < x) t++;
+  if (y > 0 && t * y < x) t++;
+  if (y < 0 && t * y > x) t++;
   return t;
 }
 
 T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
   T t = x / y;
-  if (t * y > x) t--;
+  if (y > 0 && t * y > x) t--;
+  if (y < 0 && t * y < x) t--;
   return t;
 }
 
