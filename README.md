@@ -7,9 +7,9 @@
 
 - lib: ライブラリ
 - src: ソースコード置き場
-  - [AtCoder](https://atcoder.jp/)
-  - [ProjectEuler](https://projecteuler.net/)
-  - [AOJ](http://judge.u-aizu.ac.jp/onlinejudge/)
-  - [HALLab-ProCon](https://www.hallab.co.jp/progcon/)
+  - [AtCoder](./src/AtCoder): https://atcoder.jp/
+  - [ProjectEuler](./src/ProjectEuler): https://projecteuler.net/
+  - [AOJ](./src/AOJ): http://judge.u-aizu.ac.jp/onlinejudge/
+  - [HALLab-ProCon](./src/HALLab-ProCon): https://www.hallab.co.jp/progcon/
   - others
 - template.d: テンプレート
