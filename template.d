@@ -81,15 +81,17 @@ mixin template Constructor() {
 void scanln(Args...)(auto ref Args args) {
   enum sep = " ";
   enum n = Args.length;
-  enum fmt = n.rep!(()=>"%s").join(sep) ~ "\n";
-  static if (__VERSION__ >= 2071) {
-    readf!fmt(args);
+  enum fmt = n.rep!(()=>"%s").join(sep);
+
+  string line = readln.chomp;
+  static if (__VERSION__ >= 2074) {
+    line.formattedRead!fmt(args);
   } else {
     enum argsTemp = n.iota.map!(
       i => "&args[%d]".format(i)
     ).join(", ");
     mixin(
-      "readf(fmt, " ~ argsTemp ~ ");"
+      "line.formattedRead(fmt, " ~ argsTemp ~ ");"
     );
   }
 }
