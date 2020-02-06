@@ -1,3 +1,18 @@
+
+// // update(l, r, x) := as[l..r] += x
+// // query(l, r) := as[l..r].sum
+// struct P {
+//   long num, x;
+// }
+// alias RSQ = LazySegTree!(
+//   P, long,
+//   (a, b) => P(a.num + b.num, a.x + b.x),
+//   "a+b",
+//   (a, b) => P(a.num, a.x + b*a.num),
+//   P(0, 0),
+//   0
+// );
+
 // Lazy Segment Tree
 //    - with 1-based array
 struct LazySegTree(
@@ -79,16 +94,6 @@ public:
     recalc(b - 1);
   }
 
-  // i番目の要素をmに更新
-  // O(logN)
-  void setValue(size_t i, M m) {
-    i += _size;
-    evaluate(i);
-    _data[i].value = m;
-    _lazy[i] = eX;
-    recalc(i);
-  }
-
   // 区間[a, b)でのクエリ (valueの取得)
   // O(logN)
   M query(size_t a, size_t b) {
@@ -116,11 +121,22 @@ public:
     return pair;
   }
 
-  // O(1)
+  // i番目の要素を取得
+  // O(logN)
   M get(size_t i) {
     i += _size;
     evaluate(i);
     return reflect(i).value;
+  }
+
+  // i番目の要素をmに更新
+  // O(logN)
+  void set(size_t i, M m) {
+    i += _size;
+    evaluate(i);
+    _data[i].value = m;
+    _lazy[i] = eX;
+    recalc(i);
   }
 
 private:
