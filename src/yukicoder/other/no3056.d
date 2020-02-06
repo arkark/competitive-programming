@@ -1,5 +1,3 @@
-module yukicoder.no3056;
-
 import std.stdio;
 import std.string;
 import std.format;
