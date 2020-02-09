@@ -25,12 +25,12 @@ struct LazySegTree(
   X eX,        // Xの単位元
   bool structly = true
 ) if (
-  is(typeof(binaryFun!funMM(M.init, M.init)) : M) &&
-  is(typeof(binaryFun!funXX(X.init, X.init)) : X) &&
-  is(typeof(binaryFun!funMX(M.init, X.init)) : M) &&
-  binaryFun!funMM(M.init, M.init) == M.init &&
-  binaryFun!funXX(X.init, X.init) == X.init &&
-  binaryFun!funMX(M.init, X.init) == M.init
+  is(typeof(binaryFun!funMM(eM, eM)) : M) &&
+  is(typeof(binaryFun!funXX(eX, eX)) : X) &&
+  is(typeof(binaryFun!funMX(eM, eX)) : M) &&
+  binaryFun!funMM(eM, eM) == eM &&
+  binaryFun!funXX(eX, eX) == eX &&
+  binaryFun!funMX(eM, eX) == eM
 ) {
 
 private:
