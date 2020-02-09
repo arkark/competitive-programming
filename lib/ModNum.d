@@ -1,7 +1,7 @@
 alias ModNum = ModNumber!(long, MOD);
 
 struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
-  private enum FACT_MAX = 1000010;
+  private enum FACT_MAX = 2000010;
 
   T value;
   this(T value) {
