@@ -14,6 +14,7 @@ import std.container;
 import std.concurrency;
 import std.traits;
 import std.uni;
+import std.regex;
 import core.bitop : popcnt;
 alias Generator = std.concurrency.Generator;
 
