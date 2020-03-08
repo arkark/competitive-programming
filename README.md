@@ -14,3 +14,20 @@
   - [HALLab-ProCon](src/HALLab-ProCon): https://www.hallab.co.jp/progcon/
   - others
 - template.d: テンプレート
+
+## Prepare for a contest
+
+```terminal
+$ ./compro a b c d e f
+Input a contest URL: https://atcoder.jp/contests/agc001
+Created:
+workspace/b.d
+workspace/c.d
+workspace/.config.toml
+workspace/d.d
+workspace/a.d
+workspace/e.d
+workspace/f.d
+$ cd workspace
+$ atcoder-auto-tester
+```
