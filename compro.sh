@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 
 # ./compro.sh a b
-#  -> Create dir/a.d, dir/b.d
+#  -> Create workspace/a.d, workspace/b.d
 
-folderName="dir"
+folderName="workspace"
 templateFileName="template.d"
 
 if [ -e $folderName ]; then
