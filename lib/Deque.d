@@ -226,7 +226,7 @@ public:
   string toString() const {
     auto xs = frontData[clamp(-endIndex, 0, frontSize)..clamp(-beginIndex, 0, frontSize)];
     auto ys = backData[clamp(beginIndex, 0, backSize)..clamp(endIndex, 0, backSize)];
-    return "Deque(%s)".format(xs.retro.array ~ ys);
+    return "Deque(%s)".format(xs.retro.map!(to!T).array ~ ys);
   }
 
 private:
