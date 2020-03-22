@@ -4,4 +4,4 @@ d:
   - dmd-2.070.1 # for AtCoder
 script:
   - rdmd -unittest template.d
-  - find lib -name "*.d" | xargs -i sh -c 'echo "Test {}" && rdmd -main -unittest -J="lib" {}'
+  - find lib -name "*.d" | xargs -i sh -c 'echo "Test {}" && rdmd -main -unittest -Jlib {}'
