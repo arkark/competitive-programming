@@ -2,6 +2,9 @@
 //   using Doubling Technique
 
 struct LCA {
+  import std.math : log2;
+  import std.algorithm : map, each, swap;
+  import std.range : iota, retro;
 
 private:
   size_t _size;

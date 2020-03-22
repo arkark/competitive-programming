@@ -1,3 +1,5 @@
+import std.typecons : Tuple, tuple;
+import std.numeric : gcd;
 
 // @return: gcd(a, b)
 // @side x, y:

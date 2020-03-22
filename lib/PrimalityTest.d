@@ -1,19 +1,20 @@
-import std.stdio;
-import std.random;
-import std.conv;
-import std.string;
-import std.bigint;
-import std.math;
-
-// 強擬素数 3215031751
-void main() {
-  long r = readln().chomp().to!long();
-  r.isPrime().writeln();
+@safe unittest {
+  import std.random : Random, unpredictableSeed, uniform;
+  Random rnd = Random(unpredictableSeed);
+  foreach(_; 0..100) {
+    long r = uniform(1, 100000L, rnd);
+    assert(r.isPrime_simple() == r.isPrime_DeterministicMillerRabinTest());
+  }
 }
 
+// 強擬素数 3215031751
+@safe pure unittest {
+  long r = 3215031751;
+  assert(!r.isPrime_simple());
+  assert(!r.isPrime_DeterministicMillerRabinTest());
+}
 
-
-long modPow(long base, long power, long mod)  {
+long modPow(long base, long power, long mod) @safe pure {
   long result = 1;
   for (; power > 0; power >>= 1) {
     if (power & 1) {
@@ -21,12 +22,14 @@ long modPow(long base, long power, long mod)  {
     }
     base = (base * base) % mod;
   }
-  return result.toLong();
+  return result;
 }
 
-bool isPrime_MillerRabinTest(long n, int k) {
+bool isPrime_MillerRabinTest(long n, int k) @safe {
   if (n == 2) return true;
   if (n < 2 || !(n&1)) return false;
+
+  import std.random : Random, unpredictableSeed, uniform;
 
   long d = n-1;
   int s = 0;
@@ -48,20 +51,21 @@ bool isPrime_MillerRabinTest(long n, int k) {
   return true;
 }
 
-/*
-bool isPrime(long n) {
+bool isPrime_simple(long n) @safe pure {
   if (n == 2) return true;
   if (n < 2 || !(n&1)) return false;
   for (long i=3; i*i<=n; i+=2) {
     if (n%i == 0) return false;
   }
   return true;
-}*/
+}
 
-/*// ミラーラビン素数判定法の決定的アルゴリズム版
-bool isPrime(long n) {
+// ミラーラビン素数判定法の決定的アルゴリズム版
+bool isPrime_DeterministicMillerRabinTest(long n) @safe pure {
   if (n == 2) return true;
   if (n < 2 || !(n&1)) return false;
+
+  import std.math : log;
 
   long d = n-1;
   int s = 0;
@@ -82,4 +86,4 @@ bool isPrime(long n) {
     if (!flg) return false;
   }
   return true;
-}*/
+}

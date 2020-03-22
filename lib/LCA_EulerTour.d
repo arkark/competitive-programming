@@ -1,7 +1,12 @@
 // LCA: Lowest Common Ancestor
 //   using EulerTour & SegTree
 
+version(unittest) {
+  mixin(import("SegTree.d"));
+}
+
 struct LCA {
+  import std.algorithm : each, map, min, max;
 
 private:
   alias SegT = SegTree!(SegNode, (a, b) => a.depth<b.depth ? a:b, SegNode(int.max, size_t.max));

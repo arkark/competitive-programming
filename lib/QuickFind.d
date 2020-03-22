@@ -1,4 +1,5 @@
 struct QuickFind {
+  import std.algorithm : swap;
 
 private:
   size_t[] i2g;

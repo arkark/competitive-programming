@@ -9,6 +9,7 @@
   long[] cs = Ntt.mul(as, bs, t); // -> 多項式の積 as * bs mod t
 */
 struct Ntt {
+  import std.algorithm : swap;
   private {
     enum long[] MOD_LIST = [1224736769, 469762049, 167772161];
     enum long[] PRIMITIVE_ROOT_LIST = [3, 3, 3];

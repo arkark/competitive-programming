@@ -1,8 +1,13 @@
 // Suffix Array (Manber & Myers algorithm)
 //   O(n (log n)^2)
 int[] getSuffixArray(T)(T[] xs) in {
+  import std.algorithm : all;
   assert(xs.all!"a>=0");
 } body {
+  import std.conv : to;
+  import std.algorithm : sort;
+  import std.array : array;
+
   int n = xs.length.to!int;
 
   int[] suffixArray = new int[n+1];
@@ -39,6 +44,8 @@ int[] getSuffixArray(T)(T[] xs) in {
 //   O(n)
 //   @required Suffix Array
 int[] getLCPArray(T)(T[] xs, int[] suffixArray) {
+  import std.conv : to;
+
   int n = xs.length.to!int;
   assert(n+1 == suffixArray.length);
 
@@ -65,7 +72,7 @@ int[] getLCPArray(T)(T[] xs, int[] suffixArray) {
   return lcpArray;
 }
 
-unittest {
+@safe pure unittest {
   string xs = "abracadabra";
   int[] suffixArray = xs.getSuffixArray;
   int[] lcpArray = xs.getLCPArray(suffixArray);

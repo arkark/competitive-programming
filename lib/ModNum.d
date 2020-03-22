@@ -1,3 +1,4 @@
+enum long MOD = 10L^^9+7;
 alias ModNum = ModNumber!(long, MOD);
 
 struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {

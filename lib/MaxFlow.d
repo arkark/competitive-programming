@@ -2,6 +2,9 @@
 //   Dinic's algorithm O(VE^2)
 
 struct MaxFlow {
+  import std.algorithm : min;
+
+  enum long INF = long.max/5;
   Vertex[] vertices;
 
 public:

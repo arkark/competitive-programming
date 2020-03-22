@@ -1,18 +1,6 @@
-import std.stdio;
-import std.conv;
-import std.string;
-
 // sieve of Eratosthenes
 
-void main() {
-  long n = readln().chomp().to!long();
-  bool[] ary1 = n.getIsPrimes();
-  ary1[10].writeln();
-  long[] ary2 = n.getPrimes();
-  ary2[10].writeln();
-}
-
-bool[] getIsPrimes(long limit) {
+bool[] getIsPrimes(long limit) @safe pure {
   bool[] isPrimes = new bool[limit+1];
   isPrimes[2..$] = true;
   for (long i=2; i*i<=isPrimes.length; i++) {
@@ -25,7 +13,7 @@ bool[] getIsPrimes(long limit) {
   return isPrimes;
 }
 
-long[] getPrimes(long limit) {
+long[] getPrimes(long limit) @safe pure {
   bool[] isPrimes = new bool[limit+1];
   isPrimes[2..$] = true;
   for (long i=2; i*i<=isPrimes.length; i++) {
@@ -40,4 +28,26 @@ long[] getPrimes(long limit) {
     if (flg) primes ~= i;
   }
   return primes;
+}
+
+@safe pure unittest {
+  long n = 12;
+  assert(n.getIsPrimes == [
+    false, // 0
+    false, // 1
+    true, // 2
+    true, // 3
+    false, // 4
+    true, // 5
+    false, // 6
+    true, // 7
+    false, // 8
+    false, // 9
+    false, // 10
+    true, // 11
+    false, // 12
+  ]);
+  assert(n.getPrimes == [
+    2, 3, 5, 7, 11
+  ]);
 }

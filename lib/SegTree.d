@@ -1,10 +1,15 @@
+import std.functional;
+
 // // RMQ (Range Minimum Query)
 // alias RMQ(T) = SegTree!(T, "a<b ? a:b", T.max);
 
 // Segment Tree
 //    - with 1-based array
 struct SegTree(T, alias fun, T initValue, bool structly = true)
-  if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
+if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
+
+  import std.algorithm : map;
+  import std.array : array;
 
 private:
   alias _fun = binaryFun!fun;
