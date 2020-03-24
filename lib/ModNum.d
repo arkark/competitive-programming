@@ -2,7 +2,8 @@ enum long MOD = 10L^^9+7;
 alias ModNum = ModNumber!(long, MOD);
 
 struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
-  private enum FACT_MAX = 2000010;
+  private enum FACT_SIZE = 10000010; // size of memo for factorization
+  private enum LUCAS_SIZE = 1010;    // size of memo for Lucas's theorem
 
   T value;
   this(T value) {
@@ -56,6 +57,9 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   ModNumber getReciprocal(ModNumber x) in {
     debug assert(isPrime(mod));
   } body {
+    if (x.value == 0) {
+      throw new Exception("divide by 0");
+    }
     return ModNumber(modPow(x.value, mod-2));
   }
   T modPow(T base, T power)  {
@@ -86,10 +90,14 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
 
   // n! : 階乗
   static ModNumber fact(T n) {
-    assert(0<=n && n<=FACT_MAX);
+    if (n >= mod) {
+      return ModNumber(0);
+    }
+
+    assert(0 <= n && n <= FACT_SIZE);
     static ModNumber[] memo;
     if (memo.length == 0) {
-      memo = new ModNumber[FACT_MAX+1];
+      memo = new ModNumber[FACT_SIZE + 1];
       memo[0] = ModNumber(1);
       assert(memo[0] != ModNumber.init);
     }
@@ -106,12 +114,14 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
 
   // 1/(n!) : 階乗の逆元 (逆元テーブルを用いる)
   static ModNumber invFact(T n) {
-    assert(0<=n && n<=FACT_MAX);
+    assert(0 <= n && n <= FACT_SIZE);
+    assert(n < mod);
+
     static ModNumber inverse(T n) {
-      assert(1<=n && n<=FACT_MAX);
+      assert(1 <= n && n <= FACT_SIZE);
       static ModNumber[] memo;
       if (memo.length == 0) {
-        memo = new ModNumber[FACT_MAX+1];
+        memo = new ModNumber[FACT_SIZE + 1];
       }
       if (memo[n] != ModNumber.init) {
         return memo[n];
@@ -119,9 +129,10 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
         return memo[n] = n==1 ? ModNumber(1) : ModNumber(-mod/n)*inverse(mod%n);
       }
     }
+
     static ModNumber[] memo;
     if (memo.length == 0) {
-      memo = new ModNumber[FACT_MAX+1];
+      memo = new ModNumber[FACT_SIZE + 1];
       memo[0] = 1;
       assert(memo[0] != ModNumber.init);
     }
@@ -137,23 +148,51 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   }
 
   // {}_n C_r: 組合せ
-  static ModNumber comb(T n, T r) {
-    import std.functional : memoize;
-    if (r<0 || r>n) return ModNumber(0);
-    if (r*2 > n) return comb(n, n-r);
+  template comb() {
+    static ModNumber comb(T n, T r) {
+      import std.functional : memoize;
+      if (r<0 || r>n) return ModNumber(0);
+      if (r*2 > n) return comb(n, n-r);
 
-    if (n<=FACT_MAX) {
-      return fact(n) * invFact(r) * invFact(n-r); // 逆元テーブルを使用する
-      // return fact(n) / fact(r) / fact(n-r); // 逆元テーブルを使用しない
+      if (r < mod && n-r < mod) {
+
+        if (n <= FACT_SIZE) {
+          return fact(n) * invFact(r) * invFact(n-r); // 逆元テーブルを使用する
+          // return fact(n) / fact(r) / fact(n-r); // 逆元テーブルを使用しない
+        } else if (r <= FACT_SIZE) {
+          return reverseFact(n, n-r) / fact(r);
+        } else {
+          assert(false);
+        }
+
+      } else {
+
+        // Lucas's theorem
+        static if (mod == 2) {
+          return ModNumber((n&r) == r);
+        } else static if (mod <= LUCAS_SIZE) {
+          ModNumber res = 1;
+          while(n > 0 || r > 0) {
+            T n2 = n % mod;
+            T r2 = r % mod;
+            res *= tableComb(n2, r2);
+            n /= mod;
+            r /= mod;
+          }
+          return res;
+        } else {
+          assert(false);
+        }
+      }
     }
 
     // n!/r!
-    static ModNumber reverseFact(T n, T r) {
+    private static ModNumber reverseFact(T n, T r) {
       T t = n - r;
-      assert(0<=t && t<=FACT_MAX);
+      assert(0<=t && t<=FACT_SIZE);
       static ModNumber[][T] memo;
       if (n !in memo) {
-        memo[n] = new ModNumber[FACT_MAX];
+        memo[n] = new ModNumber[FACT_SIZE];
         memo[n][0] = 1;
         assert(memo[n][0] != ModNumber.init);
       }
@@ -169,7 +208,25 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
       assert(false);
     }
 
-    return reverseFact(n, n-r) / fact(r);
+    static if (mod <= LUCAS_SIZE) {
+      private static tableComb(T n, T r) in {
+        assert(0 <= n && n <= LUCAS_SIZE);
+        assert(0 <= r && r <= LUCAS_SIZE);
+      } body {
+        static ModNumber[][] memo;
+        if (memo.length == 0) {
+          memo = new ModNumber[][](LUCAS_SIZE + 1, LUCAS_SIZE + 1);
+          memo[0][0] = 1;
+          foreach(i; 1..LUCAS_SIZE+1) {
+            memo[i][0] = 1;
+            foreach(j; 1..LUCAS_SIZE+1) {
+              memo[i][j] = memo[i-1][j-1] + memo[i-1][j];
+            }
+          }
+        }
+        return memo[n][r];
+      }
+    }
   }
 
   // {}_n H_r: 重複組合せ (Homogeneous Combination)
@@ -186,4 +243,61 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     assert(this.value>=0);
     assert(this.value<mod);
   }
+}
+
+@safe pure unittest {
+  enum p = 10L^^9 + 7;
+  alias ModNum = ModNumber!(long, p);
+
+  ModNum x;
+  assert(x.value == 0);
+  x = 10;
+  assert(x.value == 10);
+  x = -10;
+  assert(x.value == -10 + p);
+  x = 10L^^9 + 7 + 10;
+  assert(x.value == 10);
+}
+
+@safe pure unittest {
+  enum p = 10L^^9 + 7;
+  alias ModNum = ModNumber!(long, p);
+
+  ModNum x = 10;
+  ModNum y = p - 5;
+  assert(x + y == ModNum(5));
+  assert(x - y == ModNum(15));
+  assert(x * y == ModNum(10*p - 50));
+
+  ModNum z = x / y;
+  assert(z * y == x);
+
+  try {
+    scope(success) assert(false);
+    ModNum w = 0;
+    x / w;
+  } catch(Exception e) {
+  }
+}
+
+@safe unittest {
+  enum p1 = 10L^^9 + 7;
+  enum p2 = 3;
+  alias ModNum1 = ModNumber!(long, p1);
+  alias ModNum2 = ModNumber!(long, p2);
+
+  assert(ModNum1.fact(0).value == 1);
+  assert(ModNum1.fact(1).value == 1);
+  assert(ModNum1.fact(5).value == 120);
+  assert(ModNum1.fact(100).value == 437918130);
+
+  assert(ModNum2.fact(0).value == 1);
+  assert(ModNum2.fact(1).value == 1);
+  assert(ModNum2.fact(2).value == 2);
+  assert(ModNum2.fact(3).value == 0);
+  assert(ModNum2.fact(100).value == 0);
+}
+
+@safe unittest {
+  // TODO: comb, hComb
 }
