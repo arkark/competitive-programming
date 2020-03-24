@@ -150,7 +150,6 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   // {}_n C_r: 組合せ
   template comb() {
     static ModNumber comb(T n, T r) {
-      import std.functional : memoize;
       if (r<0 || r>n) return ModNumber(0);
       if (r*2 > n) return comb(n, n-r);
 
@@ -183,6 +182,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
         } else {
           assert(false);
         }
+
       }
     }
 
