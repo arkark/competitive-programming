@@ -69,6 +69,16 @@ if (isIntegral!T || isFloatingPoint!T)
     T x = 0;
     T y = 0;
 
+    this(T x, T y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    this(Vec v) {
+      this.x = v.x;
+      this.y = v.y;
+    }
+
     Vec opBinary(string op)(Vec that) {
       return Vec(
         mixin("this.x" ~ op ~ "that.x"),
@@ -82,17 +92,19 @@ if (isIntegral!T || isFloatingPoint!T)
         mixin("this.y" ~ op ~ "that"),
       );
     }
-  }
-
-  struct Point {
-    Vec pos = Vec(0, 0);
 
     bool inCircle(Circle circle) {
       T d2 = distSq(circle.center, this.pos);
       T r2 = circle.radius * circle.radius;
       return d2 <= r2 || d2.eq(r2);
     }
+
+    Vec pos() {
+      return this;
+    }
   }
+
+  alias Point = Vec;
 
   struct Line {
     Vec pos = Vec(0, 0);
@@ -184,10 +196,6 @@ if (isIntegral!T || isFloatingPoint!T)
   }
 
   // functions for shapes
-
-  double dist(Point a, Point b) pure {
-    return dist(a.pos, b.pos);
-  }
 
   double dist(Point a, Line b) pure {
     return cross(a.pos - b.pos, b.dir).abs / b.dir.length;
