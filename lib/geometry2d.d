@@ -63,6 +63,12 @@ if (isIntegral!T || isFloatingPoint!T)
   struct Circle {
     Vec center = Vec(0, 0);
     T radius = 1;
+
+    bool inCircle(Circle that) {
+      double d = dist(this.center, that.center);
+      T r2 = that.radius - this.radius;
+      return d <= r2 || d.eq(r2);
+    }
   }
 
   struct Polygon {
@@ -255,8 +261,8 @@ if (isIntegral!T || isFloatingPoint!T)
         (a.radius*a.radius + d*d - b.radius*b.radius) / (2*a.radius*d)
       );
       double theta = (b.center - a.center).arg;
-      Vec v1 = a.center + Vec(cos(theta + alpha)*a.radius, sin(theta + alpha)*a.radius);
-      Vec v2 = a.center + Vec(cos(theta - alpha)*a.radius, sin(theta - alpha)*a.radius);
+      Vec v1 = a.center + Vec(cos(theta - alpha)*a.radius, sin(theta - alpha)*a.radius);
+      Vec v2 = a.center + Vec(cos(theta + alpha)*a.radius, sin(theta + alpha)*a.radius);
 
       return [v1, v2];
     }
@@ -487,5 +493,18 @@ unittest {
       Circle(Vec(2, 6), 1)
     );
     assert(result.length == 0);
+
+    assert(
+      Circle(Vec(2, 3), 1).inCircle(Circle(Vec(3, 4), 5.0)) &&
+      !Circle(Vec(3, 4), 5.0).inCircle(Circle(Vec(2, 3), 1))
+    );
+    assert(
+      Circle(Vec(2, 3), 1).inCircle(Circle(Vec(3, 4), sqrt(2.0) + 1)) &&
+      !Circle(Vec(3, 4), sqrt(2.0) + 1).inCircle(Circle(Vec(2, 3), 1))
+    );
+    assert(
+      !Circle(Vec(2, 3), 1).inCircle(Circle(Vec(3, 4), 1)) &&
+      !Circle(Vec(3, 4), 1).inCircle(Circle(Vec(2, 3), 1))
+    );
   }
 }
