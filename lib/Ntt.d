@@ -67,14 +67,14 @@ struct Ntt {
       foreach(ref c; css[0]) {
         c %= mod;
       }
-    } else if (NTT_CONVOLUTION_TIME == 2) {
+    } else static if (NTT_CONVOLUTION_TIME == 2) {
       enum long r01 = invMod(MOD_LIST[0], MOD_LIST[1]);
       foreach(i; 0..sz) {
         css[1][i] = (css[1][i] - css[0][i]) * r01 % MOD_LIST[1];
         if (css[1][i] < 0) css[1][i] += MOD_LIST[1];
         css[0][i] = (css[0][i] + css[1][i] * MOD_LIST[0]) % mod;
       }
-    } else if (NTT_CONVOLUTION_TIME == 3) {
+    } else static if (NTT_CONVOLUTION_TIME == 3) {
       enum long r01 = invMod(MOD_LIST[0], MOD_LIST[1]);
       enum long r02 = invMod(MOD_LIST[0], MOD_LIST[2]);
       enum long r12 = invMod(MOD_LIST[1], MOD_LIST[2]);
@@ -98,10 +98,10 @@ struct Ntt {
 
       size_t mask = sz - 1;
       size_t p = 0;
-      long[] tmp = new long[sz];
+      long[] xs = new long[sz];
       for(size_t i = sz >> 1; i > 0; i >>= 1) {
-        long[] cur = (p&1) ? tmp : as;
-        long[] nex = (p&1) ? as : tmp;
+        long[] cur = (p&1) ? xs : as;
+        long[] nex = (p&1) ? as : xs;
         long e = powMod(primitiveRoot, (mod - 1)/sz*i, mod);
         if (inv) {
           e = invMod(e, mod);
@@ -116,7 +116,7 @@ struct Ntt {
         p++;
       }
       if (p&1) {
-        swap(as, tmp);
+        swap(as, xs);
       }
       if (inv) {
         long invSz = invMod(sz, mod);
