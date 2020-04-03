@@ -32,75 +32,172 @@ class Vertex {
 void main() {
   long N;
   scanln(N);
-  Vertex[] vs = N.iota.map!(i => new Vertex(i)).array;
+
+  struct M {
+    ModNum value;
+    long notEatenNum;
+    long num;
+  }
+
+  auto rerooting = Rerooting!(
+    M, bool,
+    (a, b) => M(
+      a.value*b.value*ModNum.invFact(a.notEatenNum)*ModNum.invFact(b.notEatenNum),
+      0,
+      a.num + b.num,
+    ),
+    (a, _) => M(
+      a.value*ModNum.fact(a.num),
+      a.num + 1,
+      a.num + 1,
+    ),
+    M(ModNum(1), 0, 0),
+    false
+  )(N);
+
   foreach(i; 0..N-1) {
     long a, b;
     scanln(a, b);
     a--; b--;
-    vs[a].vs ~= vs[b];
-    vs[b].vs ~= vs[a];
-  }
-  foreach(i; 0..N) {
-    vs[i].cs = new ModNum[vs[i].vs.length];
-    vs[i].nums = new long[vs[i].vs.length];
+    rerooting.addEdge(a, b);
   }
 
-  struct Result {
-    ModNum c;
-    long num;
+  foreach(m; rerooting.solve) {
+    m.value.writeln;
+  }
+}
+
+template Rerooting(
+  M,              // DPの要素の型
+  X,              // 各頂点がもつ値の型
+  alias fun,      // DPの要素間の2項演算
+  alias afterFun, // 頂点の値からDPの要素への作用
+  M identity,     // DPの要素の単位元
+  bool ctfeCheckActive = true,
+) {
+  import std.algorithm : map;
+  import std.array : array;
+  import std.functional : binaryFun;
+
+  static if (ctfeCheckActive) {
+    static assert(is(typeof(binaryFun!fun(identity, identity)) : M));
+    static assert(is(typeof(binaryFun!afterFun(identity, X.init)) : M));
+    static assert(binaryFun!fun(identity, identity) == identity);
   }
 
-  Result dfs(Vertex v, Vertex from = null) {
-    ModNum c = 1;
-    long num = 1;
-    foreach(j, u; v.vs) {
-      if (u is from) continue;
-      auto res = dfs(u, v);
-      v.cs[j] = res.c;
-      v.nums[j] = res.num;
-      num += res.num;
-      c *= res.c;
-      c *= ModNum.invFact(res.num);
-    }
-    c *= ModNum.fact(num - 1);
-    return Result(c, num);
-  }
-  dfs(vs[0]);
+  struct Rerooting {
 
-  void dfs2(Vertex v, Result fromRes = Result.init, Vertex from = null) {
-    foreach(j, u; v.vs) {
-      if (u is from) {
-        v.cs[j] = fromRes.c;
-        v.nums[j] = fromRes.num;
+  private:
+    alias _fun = binaryFun!fun;
+    alias _afterFun = binaryFun!afterFun;
+
+    Vertex[] _vertices;
+
+  public:
+    // O(n)
+    this(size_t n) {
+      _vertices.length = n;
+      foreach(i; 0..n) {
+        _vertices[i] = new Vertex(X.init);
       }
     }
-    Result res = Result(ModNum(1), 1);
-    foreach(j, u; v.vs) {
-      res.num += v.nums[j];
-      res.c *= v.cs[j];
-      res.c *= ModNum.invFact(v.nums[j]);
-    }
-    foreach(j, u; v.vs) {
-      if (u is from) continue;
-      Result newRes = res;
-      newRes.num -= v.nums[j];
-      newRes.c /= v.cs[j];
-      newRes.c *= ModNum.fact(v.nums[j]);
-      newRes.c *= ModNum.fact(newRes.num - 1);
-      dfs2(u, newRes, v);
-    }
-  }
-  dfs2(vs[0]);
 
-  foreach(i, v; vs) {
-    Result res = Result(ModNum(1), 1);
-    foreach(j, u; v.vs) {
-      res.num += v.nums[j];
-      res.c *= v.cs[j];
-      res.c *= ModNum.invFact(v.nums[j]);
+    // O(n)
+    this(X[] values) {
+      _vertices = values.map!(
+        value => new Vertex(value)
+      ).array;
     }
-    res.c *= ModNum.fact(res.num - 1);
-    res.c.writeln;
+
+    size_t size() {
+      return _vertices.length;
+    }
+
+    void addEdge(size_t x, size_t y) {
+      _vertices[x].adj ~= _vertices[y];
+      _vertices[y].adj ~= _vertices[x];
+    }
+
+    M[] solve(size_t rootIndex = 0) in {
+      assert(rootIndex < size);
+    } body {
+      Vertex[] vs = getOrderedVertices(rootIndex);
+
+      foreach_reverse(v; vs) {
+        M acc = identity;
+        foreach(u; v.adj) {
+          if (u is v.parent) continue;
+          acc = _fun(acc, u.dpValue);
+        }
+        acc = _afterFun(acc, v.value);
+        v.dpValue = acc;
+      }
+
+      M[] accL = new M[size];
+      M[] accR = new M[size];
+      foreach(v; vs) {
+        size_t len = v.adj.length;
+        assert(len+1 <= size);
+        accL[0] = identity;
+        accR[len] = identity;
+        foreach(j, u; v.adj) {
+          accL[j+1] = _fun(
+            accL[j],
+            u is v.parent ? v.parentDpValue : u.dpValue
+          );
+        }
+        foreach_reverse(j, u; v.adj) {
+          accR[j] = _fun(
+            u is v.parent ? v.parentDpValue : u.dpValue,
+            accR[j+1]
+          );
+        }
+        assert(accL[len] == accR[0]);
+        v.dpValue = _afterFun(accL[len], v.value);
+
+        foreach(j, u; v.adj) {
+          if (u is v.parent) continue;
+          u.parentDpValue = _afterFun(
+            _fun(accL[j], accR[j+1]),
+            v.value
+          );
+        }
+      }
+
+      return _vertices.map!"a.dpValue".array;
+    }
+
+  private:
+    class Vertex {
+      X value;
+      M dpValue;
+      Vertex[] adj;
+      Vertex parent;
+      M parentDpValue;
+      this(X value) {
+        this.value = value;
+      }
+    }
+
+    Vertex[] getOrderedVertices(size_t rootIndex) {
+      Vertex[] vs = new Vertex[size];
+      size_t index = 0;
+
+      auto stack = DList!Vertex(_vertices[rootIndex]);
+      while(!stack.empty) {
+        Vertex v = stack.back;
+        stack.removeBack;
+        vs[index++] = v;
+        foreach(u; v.adj) {
+          if (u is v.parent) continue;
+          u.parent = v;
+          stack.insertBack(u);
+        }
+      }
+      assert(index == size);
+
+      return vs;
+    }
   }
 }
 
