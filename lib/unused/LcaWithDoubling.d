@@ -1,7 +1,7 @@
 // LCA: Lowest Common Ancestor
 //   using Doubling Technique
 
-struct LCA {
+struct Lca {
   import std.math : log2;
   import std.algorithm : map, each, swap;
   import std.range : iota, retro;
