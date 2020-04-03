@@ -1,4 +1,5 @@
 template Rerooting(
+  // M は可換モノイドを仮定
   M,              // DPの要素の型
   X,              // 各頂点がもつ値の型
   alias fun,      // DPの要素間の2項演算
