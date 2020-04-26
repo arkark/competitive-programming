@@ -78,21 +78,48 @@ mixin template Constructor() {
   }
 }
 
-void scanln(Args...)(auto ref Args args) {
+template scanln(Args...) {
   enum sep = " ";
-  enum n = Args.length;
+
+  enum n = (){
+    long n = 0;
+    foreach(Arg; Args) {
+      static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
+        n += Fields!Arg.length;
+      } else {
+        n++;
+      }
+    }
+    return n;
+  }();
+
   enum fmt = n.rep!(()=>"%s").join(sep);
 
-  string line = readln.chomp;
-  static if (__VERSION__ >= 2074) {
-    line.formattedRead!fmt(args);
-  } else {
-    enum argsTemp = n.iota.map!(
-      i => "&args[%d]".format(i)
-    ).join(", ");
-    mixin(
-      "line.formattedRead(fmt, " ~ argsTemp ~ ");"
-    );
+  enum argsString = (){
+    string[] xs = [];
+    foreach(i, Arg; Args) {
+      static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
+        foreach(T; FieldNameTuple!Arg) {
+          xs ~= "&args[%d].%s".format(i, T);
+        }
+      } else {
+        xs ~= "&args[%d]".format(i);
+      }
+    }
+    return xs.join(", ");
+  }();
+
+  void scanln(auto ref Args args) {
+    string line = readln.chomp;
+    static if (__VERSION__ >= 2074) {
+      mixin(
+        "line.formattedRead!fmt(%s);".format(argsString)
+      );
+    } else {
+      mixin(
+        "line.formattedRead(fmt, %s);".format(argsString)
+      );
+    }
   }
 }
 
