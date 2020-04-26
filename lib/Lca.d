@@ -72,7 +72,7 @@ private:
 
   // O(N)
   void execEulerTour(size_t rootIndex) {
-    SegNode[] segNodes = new SegNode[2*size];
+    SegNode[] segNodes = new SegNode[2*size - 1];
 
     // @return: next id
     size_t dfs(Vertex v, Vertex parent, long depth, size_t id) {
