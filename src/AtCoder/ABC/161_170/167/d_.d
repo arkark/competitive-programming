@@ -1,3 +1,5 @@
+module AtCoder.ABC.161_170.167.d_;
+
 import std.stdio;
 import std.string;
 import std.format;
@@ -25,27 +27,39 @@ void main() {
   scanln(N, K);
   long[] as = readln.split.to!(long[]).map!"a-1".array;
 
-  long T = 62;
-  long[][] xss = new long[][](N, T);
-
-  foreach(i, a; as) {
-    xss[i][0] = a;
-  }
-  foreach(j; 1..T) {
-    foreach(i; 0..N) {
-      xss[i][j] = xss[xss[i][j-1]][j-1];
-    }
-  }
+  long[] bs = new long[N];
+  bs[] = -1;
 
   long x = 0;
-  foreach_reverse(j; 0..T) {
-    if (K >= (1L<<j)) {
-      x = xss[x][j];
-      K -= (1L<<j);
+  bs[x] = 0;
+  long c = 0;
+  while(true) {
+    x = as[x];
+    c++;
+    if (c == K) {
+      writeln(x + 1);
+      return;
+    }
+    if (bs[x] >= 0) break;
+    bs[x] = c;
+  }
+  K = (K-bs[x])%(c-bs[x]);
+
+  if (K == 0) {
+    writeln(x + 1);
+    return;
+  }
+
+  c = 0;
+
+  while(true) {
+    x = as[x];
+    c++;
+    if (c == K) {
+      writeln(x + 1);
+      return;
     }
   }
-  assert(K == 0);
-  writeln(x + 1);
 }
 
 // ----------------------------------------------
