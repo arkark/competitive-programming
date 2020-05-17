@@ -37,6 +37,13 @@ if (isIntegral!T || isFloatingPoint!T)
       );
     }
 
+    Vec opBinaryRight(string op)(T that) {
+      return Vec(
+        mixin("that" ~ op ~ "this.x"),
+        mixin("that" ~ op ~ "this.y"),
+      );
+    }
+
     bool inCircle(Circle circle) {
       T d2 = distSq(circle.center, this.pos);
       T r2 = circle.radius * circle.radius;
@@ -290,6 +297,12 @@ pure unittest {
     assert(v / 2 == Vec(1, 2));
     assert(v ^^ 2 == Vec(4, 25));
 
+    assert(1 + v == Vec(3, 6));
+    assert(3 - v == Vec(1, -2));
+    assert(2 * v == Vec(4, 10));
+    assert(9 / v == Vec(4, 1));
+    assert(2 ^^ v == Vec(4, 32));
+
     assert(v.dot(u) == 6 + 5);
     assert(v.cross(u) == 2 - 15);
     assert(v.lengthSq == 4 + 25);
@@ -326,6 +339,12 @@ pure unittest {
     assert((v * 2).eq(Vec(4, 10)));
     assert((v / 2).eq(Vec(1, 2.5)));
     assert((v ^^ 2).eq(Vec(4, 25)));
+
+    assert((1 + v).eq(Vec(3, 6)));
+    assert((3 - v).eq(Vec(1, -2)));
+    assert((2 * v).eq(Vec(4, 10)));
+    assert((9 / v).eq(Vec(4.5, 1.8)));
+    assert((2 ^^ v).eq(Vec(4, 32)));
 
     assert(v.dot(u).eq(6 + 5));
     assert(v.cross(u).eq(2 - 15));
