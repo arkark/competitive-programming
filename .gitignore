@@ -2,3 +2,5 @@ src/TOPSIC
 test_cases/*
 !test_cases/README.md
 .vscode
+
+/tmp
