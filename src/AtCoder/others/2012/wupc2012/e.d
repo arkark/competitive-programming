@@ -21,17 +21,29 @@ alias Generator = std.concurrency.Generator;
 enum long INF = long.max/5;
 
 void main() {
-  long K;
-  scanln(K);
+  long N, M;
+  scanln(N, M);
 
-  auto solver = Dijkstra!long(K);
-  foreach(i; 0..K) {
-    long j = i*10%K;
-    solver.addEdge(i, j, 0);
-    long k = (i + 1)%K;
-    solver.addEdge(i, k, 1);
+  long T = 4*7;
+
+  auto solver = Dijkstra!long(N*T);
+  foreach(_; 0..M) {
+    long f, t, c;
+    scanln(f, t, c);
+    foreach(i; 0..T) {
+      long j = (i + c)%T;
+      if (f != N-1) solver.addEdge(f*T + i, t*T + j, c);
+      if (t != N-1) solver.addEdge(t*T + i, f*T + j, c);
+    }
   }
-  writeln(solver.solve(1)[0] + 1);
+
+  long[] xs = solver.solve(0*T + 0);
+
+  long ans = INF;
+  foreach(i; 0..T) {
+    if (i%4==0 || i%7==0) ans.ch!min(xs[(N-1)*T + i]);
+  }
+  ans.writeln;
 }
 
 // Dijkstra's algorithm
@@ -87,7 +99,9 @@ private:
       this.index = index;
       this.cost = cost;
     }
-    override string toString() const {return "";} // for old compilers
+
+    // for old compilers
+    override string toString() const {return "";}
   }
 
   struct Edge {

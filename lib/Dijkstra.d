@@ -1,66 +1,63 @@
 // Dijkstra's algorithm
 // O((V+E)logV)
 struct Dijkstra(T) {
-  import std.algorithm;
-  import std.container; // rbtree
+  import std.algorithm : map;
+  import std.array : array;
+  import std.container : redBlackTree;
 private:
-  Vertex[] _vertices;
+  Vertex[] vertices;
 
 public:
   this(size_t size, T inf = T.max) {
-    _vertices.length = size;
+    vertices.length = size;
     foreach(i; 0..size) {
-      _vertices[i] = new Vertex(i, inf);
+      vertices[i] = new Vertex(i, inf);
     }
   }
 
-  void addEdge(size_t start, size_t end, T weight) {
-    _vertices[start].edges ~= Edge(start, end, weight);
+  void addEdge(size_t begin, size_t end, T weight) {
+    vertices[begin].edges ~= Edge(vertices[end], weight);
   }
 
-  void addEdge(T[] input) {
-    addEdge(cast(size_t) input[0], cast(size_t) input[1], input[2]);
-  }
-
-  T[] solve(size_t start, size_t end = -1) {
-    _vertices[start].cost = 0;
-    auto rbtree = redBlackTree!"a.cost==b.cost ? a.index<b.index : a.cost<b.cost"(_vertices[start]);
-    while(!rbtree.empty) {
-      Vertex v = rbtree.front;
-      if (v.index == end) break;
-      v.flag = true;
-      rbtree.removeFront;
-      v.edges.each!((Edge e) {
-        if (_vertices[e.end].flag) return;
-        if (v.cost+e.weight < _vertices[e.end].cost) {
-          rbtree.removeKey(_vertices[e.end]);
-          _vertices[e.end].cost = v.cost+e.weight;
-          rbtree.insert(_vertices[e.end]);
+  T[] solve(size_t start) {
+    vertices[start].cost = 0;
+    auto tree = redBlackTree!(
+      "a.cost != b.cost ? a.cost < b.cost : a.index < b.index",
+      Vertex,
+    )(vertices[start]);
+    while(!tree.empty) {
+      auto v = tree.front;
+      tree.removeFront;
+      foreach(e; v.edges) {
+        auto u = e.end;
+        T cost = v.cost + e.weight;
+        if (cost < u.cost) {
+          tree.removeKey(u);
+          u.cost = cost;
+          tree.insert(u);
         }
-      });
+      }
     }
-    return _vertices.map!(v => v.cost).array;
-  }
-
-  Vertex[] getVertices() {
-    return _vertices;
+    return vertices.map!"a.cost".array;
   }
 
 private:
   class Vertex {
     size_t index;
-    bool flag;
     T cost;
-    Edge[] edges = [];
+    Edge[] edges;
+
     this(size_t index, T cost) {
       this.index = index;
       this.cost = cost;
     }
-    override string toString() const {return "";} // for old compilers
+
+    // for old compilers
+    override string toString() const {return "";}
   }
+
   struct Edge {
-    size_t start;
-    size_t end;
+    Vertex end;
     T weight;
   }
 }
