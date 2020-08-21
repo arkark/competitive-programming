@@ -1,36 +1,37 @@
-
 // // update(l, r, x) := as[l..r] += x
 // // query(l, r) := as[l..r].sum
 // struct P {
 //   long num, x;
 // }
+
 // alias RSQ = LazySegTree!(
-//   P, long,
-//   (a, b) => P(a.num + b.num, a.x + b.x),
-//   "a+b",
-//   (a, b) => P(a.num, a.x + b*a.num),
-//   P(0, 0),
-//   0
+//     P, long,
+//     (a, b) => P(a.num + b.num, a.x + b.x),
+//     "a+b",
+//     (a, b) => P(a.num, a.x + b * a.num),
+//     P(0, 0),
+//     0
 // );
 
 // Lazy Segment Tree
 //    - with 1-based array
 struct LazySegTree(
-  M,           // モノイドの型
-  X,           // 作用素モノイドの型
-  alias funMM, // (M, M) → M : Mの2項演算
-  alias funXX, // (X, X) → X : Xの2項演算
-  alias funMX, // (M, X) → M : Xの元をMの元に作用させる関数
-  M eM,        // Mの単位元
-  X eX,        // Xの単位元
-  bool structly = true
-) if (
+    M, // モノイドの型
+    X, // 作用素モノイドの型
+    alias funMM, // (M, M) → M : Mの2項演算
+    alias funXX, // (X, X) → X : Xの2項演算
+    alias funMX, // (M, X) → M : Xの元をMの元に作用させる関数
+    M eM, // Mの単位元
+    X eX, // Xの単位元
+    bool structly = true
+)
+if (
   is(typeof(binaryFun!funMM(eM, eM)) : M) &&
-  is(typeof(binaryFun!funXX(eX, eX)) : X) &&
-  is(typeof(binaryFun!funMX(eM, eX)) : M) &&
-  binaryFun!funMM(eM, eM) == eM &&
-  binaryFun!funXX(eX, eX) == eX &&
-  binaryFun!funMX(eM, eX) == eM
+    is(typeof(binaryFun!funXX(eX, eX)) : X) &&
+    is(typeof(binaryFun!funMX(eM, eX)) : M) &&
+    binaryFun!funMM(eM, eM) == eM &&
+    binaryFun!funXX(eX, eX) == eX &&
+    binaryFun!funMX(eM, eX) == eM
 ) {
 
 private:
@@ -57,15 +58,15 @@ public:
   }
 
   // O(N)
-  void init(size_t size){
+  void init(size_t size) {
     _height = 0;
     _size = 1;
-    while(_size < size) {
+    while (_size < size) {
       _size <<= 1;
       _height++;
     }
-    _data.length = _size<<1;
-    _lazy.length = _size<<1;
+    _data.length = _size << 1;
+    _lazy.length = _size << 1;
     _data[] = Pair(size_t.max, eM);
     _lazy[] = eX;
     _l = 0;
@@ -81,11 +82,11 @@ public:
     evaluate(a);
     evaluate(b - 1);
     for (size_t l = a, r = b; l < r; l >>= 1, r >>= 1) {
-      if (l&1) {
+      if (l & 1) {
         _lazy[l] = _funXX(_lazy[l], x);
         l++;
       }
-      if (r&1) {
+      if (r & 1) {
         r--;
         _lazy[r] = _funXX(_lazy[r], x);
       }
@@ -103,20 +104,26 @@ public:
 
   // 区間[a, b)でのクエリ (indexの取得)
   // O(logN)
-  size_t queryIndex(size_t a, size_t b) out(result) {
+  size_t queryIndex(size_t a, size_t b)
+  out (result) {
     // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-    if (structly) assert(result != size_t.max);
-  } body {
+    if (structly)
+      assert(result != size_t.max);
+  }
+  body {
     Pair pair = accumulate(a, b);
     return pair.index;
   }
 
   // 区間[a, b)でのクエリ ((index, value)の取得)
   // O(logN)
-  Pair queryPair(size_t a, size_t b) out(result) {
+  Pair queryPair(size_t a, size_t b)
+  out (result) {
     // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-    if (structly) assert(result.index != size_t.max);
-  } body {
+    if (structly)
+      assert(result.index != size_t.max);
+  }
+  body {
     Pair pair = accumulate(a, b);
     return pair;
   }
@@ -159,7 +166,8 @@ private:
 
   Pair accumulate(size_t a, size_t b) {
     assert(a <= b);
-    if (b<=_l || _r<=a) return Pair(size_t.max, eM);
+    if (b <= _l || _r <= a)
+      return Pair(size_t.max, eM);
     a += _size;
     b += _size;
     evaluate(a);
@@ -167,8 +175,10 @@ private:
     Pair accL = Pair(size_t.max, eM);
     Pair accR = Pair(size_t.max, eM);
     for (size_t l = a, r = b; l < r; l >>= 1, r >>= 1) {
-      if (l&1) accL = select(accL, reflect(l++));
-      if (r&1) accR = select(reflect(--r), accR);
+      if (l & 1)
+        accL = select(accL, reflect(l++));
+      if (r & 1)
+        accR = select(reflect(--r), accR);
     }
     return select(accL, accR);
   }
@@ -178,41 +188,42 @@ private:
       return _data[i];
     } else {
       return Pair(
-        _data[i].index,
-        _funMX(_data[i].value, _lazy[i])
+          _data[i].index,
+          _funMX(_data[i].value, _lazy[i])
       );
     }
   }
 
   void thrust(size_t i) {
-    if (_lazy[i] == eX) return;
-    _lazy[i<<1|0] = _funXX(_lazy[i<<1|0], _lazy[i]);
-    _lazy[i<<1|1] = _funXX(_lazy[i<<1|1], _lazy[i]);
+    if (_lazy[i] == eX)
+      return;
+    _lazy[i << 1 | 0] = _funXX(_lazy[i << 1 | 0], _lazy[i]);
+    _lazy[i << 1 | 1] = _funXX(_lazy[i << 1 | 1], _lazy[i]);
     _data[i] = reflect(i);
     _lazy[i] = eX;
   }
 
   void evaluate(size_t i) {
-    foreach_reverse(k; 0.._height) {
-      thrust(i>>(k+1));
+    foreach_reverse (k; 0 .. _height) {
+      thrust(i >> (k + 1));
     }
   }
 
   void recalc(size_t i) {
-    while(i > 0) {
+    while (i > 0) {
       i >>= 1;
-      _data[i] = select(reflect(i<<1|0), reflect(i<<1|1));
+      _data[i] = select(reflect(i << 1 | 0), reflect(i << 1 | 1));
     }
   }
 
   // O(N)
   void build(M[] ms) {
-    foreach(i, e; ms) {
-      _data[i+_size] = Pair(i, e);
+    foreach (i, e; ms) {
+      _data[i + _size] = Pair(i, e);
     }
-    foreach_reverse(i; 1.._size) {
-      Pair nl = _data[i<<1|0];
-      Pair nr = _data[i<<1|1];
+    foreach_reverse (i; 1 .. _size) {
+      Pair nl = _data[i << 1 | 0];
+      Pair nr = _data[i << 1 | 1];
       _data[i] = select(nl, nr);
     }
   }

@@ -16,9 +16,10 @@ import std.traits;
 import std.uni;
 import std.regex;
 import core.bitop : popcnt;
+
 alias Generator = std.concurrency.Generator;
 
-enum long INF = long.max/5;
+enum long INF = long.max / 5;
 
 void main() {
 
@@ -26,36 +27,43 @@ void main() {
 
 // ----------------------------------------------
 
-
 void times(alias fun)(long n) {
   // n.iota.each!(i => fun());
-  foreach(i; 0..n) fun();
+  foreach (i; 0 .. n)
+    fun();
 }
+
 auto rep(alias fun, T = typeof(fun()))(long n) {
   // return n.iota.map!(i => fun()).array;
   T[] res = new T[n];
-  foreach(ref e; res) e = fun();
+  foreach (ref e; res)
+    e = fun();
   return res;
 }
 
 T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
   // `(x+y-1)/y` will only work for positive numbers ...
   T t = x / y;
-  if (y > 0 && t * y < x) t++;
-  if (y < 0 && t * y > x) t++;
+  if (y > 0 && t * y < x)
+    t++;
+  if (y < 0 && t * y > x)
+    t++;
   return t;
 }
 
 T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
   T t = x / y;
-  if (y > 0 && t * y > x) t--;
-  if (y < 0 && t * y < x) t--;
+  if (y > 0 && t * y > x)
+    t--;
+  if (y < 0 && t * y < x)
+    t--;
   return t;
 }
 
 ref T ch(alias fun, T, S...)(ref T lhs, S rhs) {
   return lhs = fun(lhs, rhs);
 }
+
 unittest {
   long x = 1000;
   x.ch!min(2000);
@@ -70,9 +78,10 @@ unittest {
 
 mixin template Constructor() {
   import std.traits : FieldNameTuple;
+
   this(Args...)(Args args) {
     // static foreach(i, v; args) {
-    foreach(i, v; args) {
+    foreach (i, v; args) {
       mixin("this." ~ FieldNameTuple!(typeof(this))[i]) = v;
     }
   }
@@ -81,9 +90,9 @@ mixin template Constructor() {
 template scanln(Args...) {
   enum sep = " ";
 
-  enum n = (){
+  enum n = () {
     long n = 0;
-    foreach(Arg; Args) {
+    foreach (Arg; Args) {
       static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
         n += Fields!Arg.length;
       } else {
@@ -93,13 +102,13 @@ template scanln(Args...) {
     return n;
   }();
 
-  enum fmt = n.rep!(()=>"%s").join(sep);
+  enum fmt = n.rep!(() => "%s").join(sep);
 
-  enum argsString = (){
+  enum argsString = () {
     string[] xs = [];
-    foreach(i, Arg; Args) {
+    foreach (i, Arg; Args) {
       static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
-        foreach(T; FieldNameTuple!Arg) {
+        foreach (T; FieldNameTuple!Arg) {
           xs ~= "&args[%d].%s".format(i, T);
         }
       } else {
@@ -113,11 +122,11 @@ template scanln(Args...) {
     string line = readln.chomp;
     static if (__VERSION__ >= 2074) {
       mixin(
-        "line.formattedRead!fmt(%s);".format(argsString)
+          "line.formattedRead!fmt(%s);".format(argsString)
       );
     } else {
       mixin(
-        "line.formattedRead(fmt, %s);".format(argsString)
+          "line.formattedRead(fmt, %s);".format(argsString)
       );
     }
   }
@@ -139,12 +148,12 @@ static if (__VERSION__ < 2071) {
 // popcnt with ulongs was added in D 2.071.0
 static if (__VERSION__ < 2071) {
   ulong popcnt(ulong x) {
-    x = (x & 0x5555555555555555L) + (x>> 1 & 0x5555555555555555L);
-    x = (x & 0x3333333333333333L) + (x>> 2 & 0x3333333333333333L);
-    x = (x & 0x0f0f0f0f0f0f0f0fL) + (x>> 4 & 0x0f0f0f0f0f0f0f0fL);
-    x = (x & 0x00ff00ff00ff00ffL) + (x>> 8 & 0x00ff00ff00ff00ffL);
-    x = (x & 0x0000ffff0000ffffL) + (x>>16 & 0x0000ffff0000ffffL);
-    x = (x & 0x00000000ffffffffL) + (x>>32 & 0x00000000ffffffffL);
+    x = (x & 0x5555555555555555L) + (x >> 1 & 0x5555555555555555L);
+    x = (x & 0x3333333333333333L) + (x >> 2 & 0x3333333333333333L);
+    x = (x & 0x0f0f0f0f0f0f0f0fL) + (x >> 4 & 0x0f0f0f0f0f0f0f0fL);
+    x = (x & 0x00ff00ff00ff00ffL) + (x >> 8 & 0x00ff00ff00ff00ffL);
+    x = (x & 0x0000ffff0000ffffL) + (x >> 16 & 0x0000ffff0000ffffL);
+    x = (x & 0x00000000ffffffffL) + (x >> 32 & 0x00000000ffffffffL);
     return x;
   }
 }

@@ -1,7 +1,7 @@
 // LCA: Lowest Common Ancestor
 //   using EulerTour & SegTree
 
-version(unittest) {
+version (unittest) {
   mixin(import("SegTree.d"));
 }
 
@@ -9,7 +9,7 @@ struct Lca {
   import std.algorithm : each, map, min, max;
 
 private:
-  alias SegT = SegTree!(SegNode, (a, b) => a.depth<b.depth ? a:b, SegNode(long.max, size_t.max));
+  alias SegT = SegTree!(SegNode, (a, b) => a.depth < b.depth ? a : b, SegNode(long.max, size_t.max));
 
   Vertex[] _vertices;
   SegT _segT;
@@ -20,7 +20,7 @@ public:
   // O(N)
   this(size_t n) {
     _vertices.length = n;
-    foreach(i, ref v; _vertices) {
+    foreach (i, ref v; _vertices) {
       v = new Vertex(i);
     }
     _builded = false;
@@ -46,25 +46,31 @@ public:
 
   // ノードx,yのLCAのノードインデックス
   // O(log N)
-  size_t queryIndex(size_t x, size_t y) in {
+  size_t queryIndex(size_t x, size_t y)
+  in {
     assert(_builded);
-  } body {
+  }
+  body {
     return querySegNode(x, y).index;
   }
 
   // ノードx,yのLCAの深さ
   // O(log N)
-  long queryDepth(size_t x, size_t y) in {
+  long queryDepth(size_t x, size_t y)
+  in {
     assert(_builded);
-  } body {
+  }
+  body {
     return querySegNode(x, y).depth;
   }
 
   // ノードxの深さ
   // O(1)
-  long getDepth(size_t x) in {
+  long getDepth(size_t x)
+  in {
     assert(_builded);
-  } body {
+  }
+  body {
     return _segT.get(_vertices[x].firstId).depth;
   }
 
@@ -72,21 +78,23 @@ private:
 
   // O(N)
   void execEulerTour(size_t rootIndex) {
-    SegNode[] segNodes = new SegNode[2*size - 1];
+    SegNode[] segNodes = new SegNode[2 * size - 1];
 
     // @return: next id
     size_t dfs(Vertex v, Vertex parent, long depth, size_t id) {
       segNodes[id].depth = depth;
       segNodes[id].index = v.index;
       v.firstId = id;
-      foreach(u; v.adj) {
-        if (u is parent) continue;
+      foreach (u; v.adj) {
+        if (u is parent)
+          continue;
         id = dfs(u, v, depth + 1, id + 1);
         segNodes[id].depth = depth;
         segNodes[id].index = v.index;
       }
       return id + 1;
     }
+
     dfs(_vertices[rootIndex], null, 0, 0);
 
     _segT = SegT(segNodes);
@@ -107,6 +115,7 @@ private:
       this.index = index;
     }
   }
+
   struct SegNode {
     long depth;
     size_t index;

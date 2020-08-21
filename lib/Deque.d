@@ -16,7 +16,7 @@ private:
 public:
 
   this(T[] data) {
-    this([], data, 0, data.length, 0, cast(ptrdiff_t)data.length, false);
+    this([], data, 0, data.length, 0, cast(ptrdiff_t) data.length, false);
   }
 
   bool empty() @property {
@@ -24,7 +24,7 @@ public:
   }
 
   size_t length() @property {
-    return cast(size_t) (endIndex - beginIndex);
+    return cast(size_t)(endIndex - beginIndex);
   }
 
   void clear() {
@@ -35,32 +35,40 @@ public:
     backSize = 0;
   }
 
-  ref T front() @property in {
+  ref T front() @property
+  in {
     assert(!empty, "Attempting to get the front of an empty Deque");
-  } body {
+  }
+  body {
     return this[0];
   }
 
-  ref T front(T value) @property in {
+  ref T front(T value) @property
+  in {
     assert(!empty, "Attempting to assign to the front of an empty Deque");
-  } body {
+  }
+  body {
     return this[0] = value;
   }
 
-  ref T back() @property in {
+  ref T back() @property
+  in {
     assert(!empty, "Attempting to get the back of an empty Deque");
-  } body {
-    return this[$-1];
+  }
+  body {
+    return this[$ - 1];
   }
 
-  ref T back(T value) @property in {
+  ref T back(T value) @property
+  in {
     assert(!empty, "Attempting to assign to the back of an empty Deque");
-  } body {
-    return this[$-1] = value;
+  }
+  body {
+    return this[$ - 1] = value;
   }
 
   void insertFront(T value) {
-    if (beginIndex>0) {
+    if (beginIndex > 0) {
       backData[beginIndex - 1] = value;
     } else {
       if (frontSize >= frontData.length) {
@@ -83,9 +91,11 @@ public:
     endIndex++;
   }
 
-  void removeFront() in {
+  void removeFront()
+  in {
     assert(!empty, "Attempting to remove the front of an empty Deque");
-  } body {
+  }
+  body {
     if (beginIndex >= 0) {
       // do nothing
     } else {
@@ -94,11 +104,14 @@ public:
     }
     beginIndex++;
   }
+
   alias popFront = removeFront;
 
-  void removeBack() in {
+  void removeBack()
+  in {
     assert(!empty, "Attempting to remove the back of an empty Deque");
-  } body {
+  }
+  body {
     if (endIndex <= 0) {
       // do nothing
     } else {
@@ -107,6 +120,7 @@ public:
     }
     endIndex--;
   }
+
   alias popBack = removeBack;
 
   typeof(this) save() @property {
@@ -120,19 +134,23 @@ public:
   }
 
   // xs[index]
-  ref T opIndex(size_t index) in {
-    assert(0<=index && index<length, "Access violation");
-  } body {
-    ptrdiff_t _index = beginIndex + (cast(ptrdiff_t)index);
-    return _index>=0 ? backData[_index] : frontData[-_index - 1];
+  ref T opIndex(size_t index)
+  in {
+    assert(0 <= index && index < length, "Access violation");
+  }
+  body {
+    ptrdiff_t _index = beginIndex + (cast(ptrdiff_t) index);
+    return _index >= 0 ? backData[_index] : frontData[-_index - 1];
   }
 
   // xs[indices[0] .. indices[1]]
-  typeof(this) opIndex(size_t[2] indices) in {
-    assert(0<=indices[0] && indices[1]<=length, "Access violation");
-  } body {
-    ptrdiff_t newBeginIndex = beginIndex + cast(ptrdiff_t)indices[0];
-    ptrdiff_t newEndIndex = beginIndex + cast(ptrdiff_t)indices[1];
+  typeof(this) opIndex(size_t[2] indices)
+  in {
+    assert(0 <= indices[0] && indices[1] <= length, "Access violation");
+  }
+  body {
+    ptrdiff_t newBeginIndex = beginIndex + cast(ptrdiff_t) indices[0];
+    ptrdiff_t newEndIndex = beginIndex + cast(ptrdiff_t) indices[1];
     size_t newFrontSize = clamp(-newBeginIndex, 0, frontSize);
     size_t newBackSize = clamp(newEndIndex, 0, backSize);
     return typeof(this)(frontData, backData, newFrontSize, newBackSize, newBeginIndex, newEndIndex, false);
@@ -144,35 +162,41 @@ public:
   }
 
   // xs[index] = value
-  ref T opIndexAssign(T value, size_t index) in {
-    assert(0<=index && index<length, "Access violation");
-  } body {
-    ptrdiff_t _index = (cast(ptrdiff_t)index) - beginIndex;
-    return (_index>=0 ? backData[_index] : frontData[-_index - 1]) = value;
+  ref T opIndexAssign(T value, size_t index)
+  in {
+    assert(0 <= index && index < length, "Access violation");
+  }
+  body {
+    ptrdiff_t _index = (cast(ptrdiff_t) index) - beginIndex;
+    return (_index >= 0 ? backData[_index] : frontData[-_index - 1]) = value;
   }
 
   // xs[indices[0] .. indices[1]] = value
-  typeof(this) opIndexAssign(T value, size_t[2] indices) in {
-    assert(0<=indices[0] && indices[1]<=length, "Access violation");
-  } body {
+  typeof(this) opIndexAssign(T value, size_t[2] indices)
+  in {
+    assert(0 <= indices[0] && indices[1] <= length, "Access violation");
+  }
+  body {
     ptrdiff_t _beginIndex = beginIndex + (cast(ptrdiff_t) indices[0]);
     ptrdiff_t _endIndex = beginIndex + (cast(ptrdiff_t) indices[1]);
-    frontData[clamp(-_endIndex, 0, frontSize)..clamp(-_beginIndex, 0, frontSize)] = value;
-    backData[clamp(_beginIndex, 0, backSize)..clamp(_endIndex, 0, backSize)] = value;
+    frontData[clamp(-_endIndex, 0, frontSize) .. clamp(-_beginIndex, 0, frontSize)] = value;
+    backData[clamp(_beginIndex, 0, backSize) .. clamp(_endIndex, 0, backSize)] = value;
     return this;
   }
 
   // xs[] = value
   typeof(this) opIndexAssign(T value) {
-    backData[0..backSize] = value;
-    frontData[0..frontSize] = value;
+    backData[0 .. backSize] = value;
+    frontData[0 .. frontSize] = value;
     return this;
   }
 
   // xs[indices[0] .. indices[1]] op= value
-  typeof(this) opIndexOpAssign(string op)(T value, size_t[2] indices) in {
-    assert(0<=indices[0] && indices[1]<=length, "Access violation");
-  } body {
+  typeof(this) opIndexOpAssign(string op)(T value, size_t[2] indices)
+  in {
+    assert(0 <= indices[0] && indices[1] <= length, "Access violation");
+  }
+  body {
     ptrdiff_t _beginIndex = beginIndex + (cast(ptrdiff_t) indices[0]);
     ptrdiff_t _endIndex = beginIndex + (cast(ptrdiff_t) indices[1]);
     mixin(q{
@@ -196,36 +220,42 @@ public:
   }
 
   // $
-  size_t opDollar(size_t dim: 0)() {
+  size_t opDollar(size_t dim : 0)() {
     return length;
   }
 
   // i..j
-  size_t[2] opSlice(size_t dim: 0)(size_t i, size_t j) in {
-    assert(0<=i && j<=length, "Access violation");
-  } body {
+  size_t[2] opSlice(size_t dim : 0)(size_t i, size_t j)
+  in {
+    assert(0 <= i && j <= length, "Access violation");
+  }
+  body {
     return [i, j];
   }
 
-  bool opEquals(S: T)(Deque!S that) {
-    if (this.length != that.length) return false;
-    foreach(i; 0..this.length) {
-      if (this[i] != that[i]) return false;
+  bool opEquals(S : T)(Deque!S that) {
+    if (this.length != that.length)
+      return false;
+    foreach (i; 0 .. this.length) {
+      if (this[i] != that[i])
+        return false;
     }
     return true;
   }
 
-  bool opEquals(S: T)(S[] that) {
-    if (this.length != that.length) return false;
-    foreach(i; 0..this.length) {
-      if (this[i] != that[i]) return false;
+  bool opEquals(S : T)(S[] that) {
+    if (this.length != that.length)
+      return false;
+    foreach (i; 0 .. this.length) {
+      if (this[i] != that[i])
+        return false;
     }
     return true;
   }
 
   string toString() const {
-    auto xs = frontData[clamp(-endIndex, 0, frontSize)..clamp(-beginIndex, 0, frontSize)];
-    auto ys = backData[clamp(beginIndex, 0, backSize)..clamp(endIndex, 0, backSize)];
+    auto xs = frontData[clamp(-endIndex, 0, frontSize) .. clamp(-beginIndex, 0, frontSize)];
+    auto ys = backData[clamp(beginIndex, 0, backSize) .. clamp(endIndex, 0, backSize)];
     return "Deque(%s)".format(xs.retro.map!(to!T).array ~ ys);
   }
 
@@ -233,8 +263,8 @@ private:
   this(T[] frontData, T[] backData, size_t frontSize, size_t backSize, ptrdiff_t beginIndex, ptrdiff_t endIndex, bool shouldDuplicate) {
     this.frontSize = frontSize;
     this.backSize = backSize;
-    this.frontData = shouldDuplicate ? frontData.dup : frontData[0..clamp(-beginIndex, 0, $)];
-    this.backData = shouldDuplicate ? backData.dup : backData[0..clamp(endIndex, 0, $)];
+    this.frontData = shouldDuplicate ? frontData.dup : frontData[0 .. clamp(-beginIndex, 0, $)];
+    this.backData = shouldDuplicate ? backData.dup : backData[0 .. clamp(endIndex, 0, $)];
     this.beginIndex = beginIndex;
     this.endIndex = endIndex;
   }
@@ -250,15 +280,16 @@ private:
   invariant {
     assert(frontSize <= frontData.length);
     assert(backSize <= backData.length);
-    assert(max(0, -beginIndex) == cast(ptrdiff_t)frontSize);
+    assert(max(0, -beginIndex) == cast(ptrdiff_t) frontSize);
     assert(beginIndex <= endIndex);
-    assert(max(0, endIndex) == cast(ptrdiff_t)backSize);
+    assert(max(0, endIndex) == cast(ptrdiff_t) backSize);
   }
 }
 
 @safe pure unittest {
   // Deque should be Range
   import std.range;
+
   assert(isInputRange!(Deque!long));
   // assert(isOutputRange!(Deque!long, int));
   // assert(isOutputRange!(Deque!long, long));
@@ -277,7 +308,7 @@ private:
   assert(xs == [1, 2, 3]);
 
   size_t i = 0;
-  foreach(x; xs) {
+  foreach (x; xs) {
     assert(x == ++i);
   }
 
@@ -313,11 +344,11 @@ private:
 
   Deque!long xs = [1, 2, 3];
   assert(xs[] == [1, 2, 3]);
-  assert((xs[0..2] = 0) == [0, 0, 3]);
-  assert((xs[0..2] += 1) == [1, 1, 3]);
+  assert((xs[0 .. 2] = 0) == [0, 0, 3]);
+  assert((xs[0 .. 2] += 1) == [1, 1, 3]);
   assert((xs[] -= 2) == [-1, -1, 1]);
 
-  Deque!long ys = xs[0..2];
+  Deque!long ys = xs[0 .. 2];
   assert(ys == [-1, -1]);
   ys[0] = 5;
   assert(ys == [5, -1]);
@@ -327,6 +358,7 @@ private:
 @safe pure unittest {
   // test using phobos
   import std.algorithm, std.array;
+
   Deque!long xs = [10, 5, 8, 3];
   assert(sort!"a<b"(xs).equal([3, 5, 8, 10]));
   assert(xs == [3, 5, 8, 10]);

@@ -9,29 +9,30 @@ private:
 public:
   this(size_t size) {
     _vertices.length = size;
-    foreach(i; 0..size) {
+    foreach (i; 0 .. size) {
       _vertices[i] = new Vertex(i);
     }
   }
 
   void addEdge(size_t start, size_t end, T weight) {
     _vertices[start].edges ~= Edge(start, end, weight);
-    _vertices[end].edges   ~= Edge(end, start, weight);
+    _vertices[end].edges ~= Edge(end, start, weight);
   }
 
   T solve() {
     _vertices.front.cost = 0;
     auto tree = redBlackTree!(
-      "a.cost==b.cost ? a.index<b.index : a.cost<b.cost",
-      true,
-      Vertex
+        "a.cost==b.cost ? a.index<b.index : a.cost<b.cost",
+        true,
+        Vertex
     )(_vertices.front);
-    while(!tree.empty) {
+    while (!tree.empty) {
       Vertex v = tree.front;
       v.used = true;
       tree.removeFront;
       v.edges.each!((Edge e) {
-        if (_vertices[e.end].used) return;
+        if (_vertices[e.end].used)
+          return;
         tree.removeKey(_vertices[e.end]);
         _vertices[e.end].cost = min(_vertices[e.end].cost, e.weight);
         tree.insert(_vertices[e.end]);
@@ -49,8 +50,12 @@ private:
     this(size_t index) {
       this.index = index;
     }
-    override string toString() const {return "";} // for old compilers
+
+    override string toString() const {
+      return "";
+    } // for old compilers
   }
+
   struct Edge {
     size_t start;
     size_t end;

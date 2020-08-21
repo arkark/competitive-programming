@@ -13,7 +13,7 @@ public:
   void init(size_t size) {
     gs.length = size;
     i2g.length = size;
-    foreach(i; 0..size) {
+    foreach (i; 0 .. size) {
       gs[i] = [i];
       i2g[i] = i;
     }
@@ -24,8 +24,9 @@ public:
       swap(x, y);
     }
     size_t gx = i2g[x], gy = i2g[y];
-    if (gx == gy) return;
-    foreach(i; gs[gy]) {
+    if (gx == gy)
+      return;
+    foreach (i; gs[gy]) {
       i2g[i] = gx;
     }
     gs[gx] ~= gs[gy];

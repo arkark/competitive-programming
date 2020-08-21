@@ -19,7 +19,7 @@ public:
     _size = size;
     _logSize = cast(size_t)(log2(_size) + 2);
     _vertices.length = _size;
-    foreach(i, ref v; _vertices) {
+    foreach (i, ref v; _vertices) {
       _vertices[i] = new Vertex;
       _vertices[i].index = i;
       _vertices[i].powParents.length = _logSize;
@@ -56,7 +56,8 @@ public:
   // O(1)
   int getDepth(size_t x) {
     // return queryDepth(x, x);
-    if (!_builded) build();
+    if (!_builded)
+      build();
     return _vertices[x].depth;
   }
 
@@ -69,19 +70,22 @@ private:
     void dfs(Vertex vertex, Vertex parent, int depth) {
       vertex.powParents[0] = parent;
       vertex.depth = depth;
-      foreach(v; vertex.edges.map!"a.end") {
-        if (v.visited) continue;
+      foreach (v; vertex.edges.map!"a.end") {
+        if (v.visited)
+          continue;
         v.visited = true;
         dfs(v, vertex, depth + 1);
       }
     }
+
     _vertices[_rootIndex].visited = true;
     dfs(_vertices[_rootIndex], null, 0);
 
-    foreach(k; 1.._logSize) {
-      foreach(v; _vertices) {
-        if (v.powParents[k-1] is null) continue;
-        v.powParents[k] = v.powParents[k-1].powParents[k-1];
+    foreach (k; 1 .. _logSize) {
+      foreach (v; _vertices) {
+        if (v.powParents[k - 1] is null)
+          continue;
+        v.powParents[k] = v.powParents[k - 1].powParents[k - 1];
       }
     }
 
@@ -89,23 +93,26 @@ private:
   }
 
   Vertex queryVertex(size_t x, size_t y) {
-    if (!_builded) build();
+    if (!_builded)
+      build();
 
     Vertex vx = _vertices[x];
     Vertex vy = _vertices[y];
 
-    if (vx.depth > vy.depth) swap(vx, vy);
-    foreach(k; 0.._logSize) {
-      if ((vy.depth - vx.depth)>>k&1) {
+    if (vx.depth > vy.depth)
+      swap(vx, vy);
+    foreach (k; 0 .. _logSize) {
+      if ((vy.depth - vx.depth) >> k & 1) {
         vy = vy.powParents[k];
         assert(vy !is null);
       }
     }
     assert(vx.depth == vy.depth);
-    if (vx is vy) return vx;
+    if (vx is vy)
+      return vx;
 
-    foreach(k; _logSize.iota.retro) {
-      if (vx.powParents[k] !is vy.powParents[k]) {
+    foreach (k; _logSize.iota.retro) {
+      if (vx.powParents[k]!is vy.powParents[k]) {
         vx = vx.powParents[k];
         vy = vy.powParents[k];
         assert(vx !is null && vy !is null);

@@ -4,13 +4,14 @@
 struct MaxFlow {
   import std.algorithm : min;
 
-  enum long INF = long.max/5;
+  enum long INF = long.max / 5;
   Vertex[] vertices;
 
 public:
   this(size_t size) {
     vertices.length = size;
-    foreach(ref v; vertices) v = new Vertex;
+    foreach (ref v; vertices)
+      v = new Vertex;
   }
 
   void addEdge(size_t start, size_t end, long capacity) {
@@ -24,17 +25,19 @@ public:
 
   long solve(size_t s, size_t t) {
     long flow = 0;
-    foreach(v; vertices) {
-      foreach(e; v.edges) {
+    foreach (v; vertices) {
+      foreach (e; v.edges) {
         e.capacity = e.initCapacity;
       }
     }
-    while(true) {
+    while (true) {
       bfs(vertices[s]);
-      if (vertices[t].level < 0) break;
-      foreach(v; vertices) v.iter = 0;
+      if (vertices[t].level < 0)
+        break;
+      foreach (v; vertices)
+        v.iter = 0;
       long f = 0;
-      while((f = dfs(vertices[s], vertices[t], INF)) > 0) {
+      while ((f = dfs(vertices[s], vertices[t], INF)) > 0) {
         flow += f;
       }
     }
@@ -44,14 +47,17 @@ public:
 private:
   void bfs(Vertex s) {
     import std.container : DList;
-    foreach(v; vertices) v.level = -1;
+
+    foreach (v; vertices)
+      v.level = -1;
     s.level = 0;
     auto list = DList!Vertex(s);
-    while(!list.empty) {
+    while (!list.empty) {
       Vertex v = list.front;
       list.removeFront;
-      foreach(e; v.edges) {
-        if (e.capacity<=0 || e.end.level>=0) continue;
+      foreach (e; v.edges) {
+        if (e.capacity <= 0 || e.end.level >= 0)
+          continue;
         e.end.level = e.start.level + 1;
         list.insertBack(e.end);
       }
@@ -59,11 +65,13 @@ private:
   }
 
   long dfs(Vertex v, Vertex t, long f) {
-    if (v is t) return f;
-    foreach(i; v.iter..v.edges.length) {
+    if (v is t)
+      return f;
+    foreach (i; v.iter .. v.edges.length) {
       v.iter = i;
       Edge e = v.edges[i];
-      if (e.capacity<=0 || e.end.level<=e.start.level) continue;
+      if (e.capacity <= 0 || e.end.level <= e.start.level)
+        continue;
       long d = dfs(e.end, t, min(f, e.capacity));
       if (d > 0) {
         e.capacity -= d;
@@ -79,6 +87,7 @@ private:
     long iter;
     Edge[] edges;
   }
+
   class Edge {
     Vertex start, end;
     long initCapacity;

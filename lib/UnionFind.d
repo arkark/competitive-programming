@@ -12,7 +12,7 @@ public:
   void init(size_t n) {
     _vertices.length = n;
     _sizes.length = n;
-    foreach(i, ref v; _vertices) {
+    foreach (i, ref v; _vertices) {
       v.index = i;
       v.parent = i;
       _sizes[i] = 1;
@@ -24,7 +24,8 @@ public:
   }
 
   void link(size_t x, size_t y) {
-    if (x==y) return;
+    if (x == y)
+      return;
     if (_vertices[x].rank > _vertices[y].rank) {
       _sizes[x] += _sizes[y];
       _vertices[y].parent = x;

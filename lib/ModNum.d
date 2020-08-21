@@ -1,9 +1,9 @@
-enum long MOD = 10L^^9+7;
+enum long MOD = 10L ^^ 9 + 7;
 alias ModNum = ModNumber!(long, MOD);
 
 struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   private enum FACT_SIZE = 10000010; // size of memo for factorization
-  private enum LUCAS_SIZE = 1010;    // size of memo for Lucas's theorem
+  private enum LUCAS_SIZE = 1010; // size of memo for Lucas's theorem
 
   T value;
   this(T value) {
@@ -17,72 +17,84 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     return this = ModNumber(value);
   }
 
-  ModNumber opBinary(string op)(ModNumber that) if (op=="+" || op=="-" || op=="*") {
-    return ModNumber(mixin("this.value "~op~" that.value"));
+  ModNumber opBinary(string op)(ModNumber that) if (op == "+" || op == "-" || op == "*") {
+    return ModNumber(mixin("this.value " ~ op ~ " that.value"));
   }
-  ModNumber opBinary(string op)(T that) if (op=="+" || op=="-" || op=="*") {
-    return ModNumber(mixin("this.value "~op~" that"));
+
+  ModNumber opBinary(string op)(T that) if (op == "+" || op == "-" || op == "*") {
+    return ModNumber(mixin("this.value " ~ op ~ " that"));
   }
-  ModNumber opBinaryRight(string op)(T that) if (op=="+" || op=="-" || op=="*") {
-    return ModNumber(mixin("that "~op~" this.value"));
+
+  ModNumber opBinaryRight(string op)(T that) if (op == "+" || op == "-" || op == "*") {
+    return ModNumber(mixin("that " ~ op ~ " this.value"));
   }
 
   ModNumber opBinary(string op)(ModNumber that) if (op == "/") {
-    return this*getReciprocal(that);
+    return this * getReciprocal(that);
   }
+
   ModNumber opBinary(string op)(T that) if (op == "/") {
-    return this*getReciprocal(ModNumber(that));
+    return this * getReciprocal(ModNumber(that));
   }
+
   ModNumber opBinaryRight(string op)(T that) if (op == "/") {
-    return ModNumber(that)*getReciprocal(this);
+    return ModNumber(that) * getReciprocal(this);
   }
 
   ModNumber opBinary(string op)(ModNumber that) if (op == "^^") {
     return ModNumber(modPow(this.value, that.value));
   }
+
   ModNumber opBinary(string op)(T that) if (op == "^^") {
     return ModNumber(modPow(this.value, that));
   }
+
   ModNumber opBinaryRight(string op)(T that) if (op == "^^") {
     return ModNumber(modPow(that, this.value));
   }
 
-  void opOpAssign(string op)(ModNumber that) if (op=="+" || op=="-" || op=="*" || op=="/") {
-    this = mixin("this" ~op~ "that");
-  }
-  void opOpAssign(string op)(T that) if (op=="+" || op=="-" || op=="*" || op=="/") {
-    this = mixin("this" ~op~ "that");
+  void opOpAssign(string op)(ModNumber that)
+  if (op == "+" || op == "-" || op == "*" || op == "/") {
+    this = mixin("this" ~ op ~ "that");
   }
 
-  ModNumber getReciprocal(ModNumber x) in {
+  void opOpAssign(string op)(T that) if (op == "+" || op == "-" || op == "*" || op == "/") {
+    this = mixin("this" ~ op ~ "that");
+  }
+
+  ModNumber getReciprocal(ModNumber x)
+  in {
     debug assert(isPrime(mod));
-  } body {
+  }
+  body {
     if (x.value == 0) {
       throw new Exception("divide by 0");
     }
-    return ModNumber(modPow(x.value, mod-2));
+    return ModNumber(modPow(x.value, mod - 2));
   }
-  T modPow(T base, T power)  {
+
+  T modPow(T base, T power) {
     T result = 1;
     for (; power > 0; power >>= 1) {
       if (power & 1) {
         result = (result * base) % mod;
       }
-      base = base*base % mod;
+      base = base * base % mod;
     }
     return result;
   }
 
   static bool isPrime(T n) {
-    if (n<2) {
+    if (n < 2) {
       return false;
-    } else if (n==2) {
+    } else if (n == 2) {
       return true;
-    } else if (n%2==0) {
+    } else if (n % 2 == 0) {
       return false;
     } else {
-      for(T i=3; i*i<=n; i+=2) {
-        if (n%i==0) return false;
+      for (T i = 3; i * i <= n; i += 2) {
+        if (n % i == 0)
+          return false;
       }
       return true;
     }
@@ -101,10 +113,10 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
       memo[0] = ModNumber(1);
       assert(memo[0] != ModNumber.init);
     }
-    foreach_reverse(i; 0..n+1) {
+    foreach_reverse (i; 0 .. n + 1) {
       if (memo[i] != ModNumber.init) {
-        foreach(j; i+1..n+1) {
-          memo[j] = memo[j-1] * j;
+        foreach (j; i + 1 .. n + 1) {
+          memo[j] = memo[j - 1] * j;
         }
         return memo[n];
       }
@@ -126,7 +138,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
       if (memo[n] != ModNumber.init) {
         return memo[n];
       } else {
-        return memo[n] = n==1 ? ModNumber(1) : ModNumber(-mod/n)*inverse(mod%n);
+        return memo[n] = n == 1 ? ModNumber(1) : ModNumber(-mod / n) * inverse(mod % n);
       }
     }
 
@@ -136,10 +148,10 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
       memo[0] = 1;
       assert(memo[0] != ModNumber.init);
     }
-    foreach_reverse(i; 0..n+1) {
+    foreach_reverse (i; 0 .. n + 1) {
       if (memo[i] != ModNumber.init) {
-        foreach(j; i+1..n+1) {
-          memo[j] = memo[j-1] * inverse(j);
+        foreach (j; i + 1 .. n + 1) {
+          memo[j] = memo[j - 1] * inverse(j);
         }
         return memo[n];
       }
@@ -150,16 +162,18 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   // {}_n C_r: 組合せ
   template comb() {
     static ModNumber comb(T n, T r) {
-      if (r<0 || r>n) return ModNumber(0);
-      if (r*2 > n) return comb(n, n-r);
+      if (r < 0 || r > n)
+        return ModNumber(0);
+      if (r * 2 > n)
+        return comb(n, n - r);
 
-      if (r < mod && n-r < mod) {
+      if (r < mod && n - r < mod) {
 
         if (n <= FACT_SIZE) {
-          return fact(n) * invFact(r) * invFact(n-r); // 逆元テーブルを使用する
+          return fact(n) * invFact(r) * invFact(n - r); // 逆元テーブルを使用する
           // return fact(n) / fact(r) / fact(n-r); // 逆元テーブルを使用しない
         } else if (r <= FACT_SIZE) {
-          return reverseFact(n, n-r) / fact(r);
+          return reverseFact(n, n - r) / fact(r);
         } else {
           assert(false);
         }
@@ -168,10 +182,10 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
 
         // Lucas's theorem
         static if (mod == 2) {
-          return ModNumber((n&r) == r);
+          return ModNumber((n & r) == r);
         } else static if (mod <= LUCAS_SIZE) {
           ModNumber res = 1;
-          while(n > 0 || r > 0) {
+          while (n > 0 || r > 0) {
             T n2 = n % mod;
             T r2 = r % mod;
             res *= tableComb(n2, r2);
@@ -189,7 +203,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     // n!/r!
     private static ModNumber reverseFact(T n, T r) {
       T t = n - r;
-      assert(0<=t && t<=FACT_SIZE);
+      assert(0 <= t && t <= FACT_SIZE);
       static ModNumber[][T] memo;
       if (n !in memo) {
         memo[n] = new ModNumber[FACT_SIZE];
@@ -197,10 +211,10 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
         assert(memo[n][0] != ModNumber.init);
       }
       auto xs = memo[n];
-      foreach_reverse(i; 0..t+1) {
+      foreach_reverse (i; 0 .. t + 1) {
         if (xs[i] != ModNumber.init) {
-          foreach(j; i+1..t+1) {
-            xs[j] = xs[j-1] * (n - j + 1);
+          foreach (j; i + 1 .. t + 1) {
+            xs[j] = xs[j - 1] * (n - j + 1);
           }
           return xs[t];
         }
@@ -209,18 +223,20 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
     }
 
     static if (mod <= LUCAS_SIZE) {
-      private static tableComb(T n, T r) in {
+      private static tableComb(T n, T r)
+      in {
         assert(0 <= n && n <= LUCAS_SIZE);
         assert(0 <= r && r <= LUCAS_SIZE);
-      } body {
+      }
+      body {
         static ModNumber[][] memo;
         if (memo.length == 0) {
           memo = new ModNumber[][](LUCAS_SIZE + 1, LUCAS_SIZE + 1);
           memo[0][0] = 1;
-          foreach(i; 1..LUCAS_SIZE+1) {
+          foreach (i; 1 .. LUCAS_SIZE + 1) {
             memo[i][0] = 1;
-            foreach(j; 1..LUCAS_SIZE+1) {
-              memo[i][j] = memo[i-1][j-1] + memo[i-1][j];
+            foreach (j; 1 .. LUCAS_SIZE + 1) {
+              memo[i][j] = memo[i - 1][j - 1] + memo[i - 1][j];
             }
           }
         }
@@ -231,22 +247,23 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
 
   // {}_n H_r: 重複組合せ (Homogeneous Combination)
   static ModNumber hComb(T n, T r) {
-    return comb(n+r-1, r);
+    return comb(n + r - 1, r);
   }
 
   string toString() const {
     import std.conv : to;
+
     return this.value.to!string;
   }
 
   invariant {
-    assert(this.value>=0);
-    assert(this.value<mod);
+    assert(this.value >= 0);
+    assert(this.value < mod);
   }
 }
 
 @safe pure unittest {
-  enum p = 10L^^9 + 7;
+  enum p = 10L ^^ 9 + 7;
   alias ModNum = ModNumber!(long, p);
 
   ModNum x;
@@ -255,33 +272,34 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   assert(x.value == 10);
   x = -10;
   assert(x.value == -10 + p);
-  x = 10L^^9 + 7 + 10;
+  x = 10L ^^ 9 + 7 + 10;
   assert(x.value == 10);
 }
 
 @safe pure unittest {
-  enum p = 10L^^9 + 7;
+  enum p = 10L ^^ 9 + 7;
   alias ModNum = ModNumber!(long, p);
 
   ModNum x = 10;
   ModNum y = p - 5;
   assert(x + y == ModNum(5));
   assert(x - y == ModNum(15));
-  assert(x * y == ModNum(10*p - 50));
+  assert(x * y == ModNum(10 * p - 50));
 
   ModNum z = x / y;
   assert(z * y == x);
 
   try {
-    scope(success) assert(false);
+    scope (success)
+      assert(false);
     ModNum w = 0;
     x / w;
-  } catch(Exception e) {
+  } catch (Exception e) {
   }
 }
 
 @safe unittest {
-  enum p1 = 10L^^9 + 7;
+  enum p1 = 10L ^^ 9 + 7;
   enum p2 = 3;
   alias ModNum1 = ModNumber!(long, p1);
   alias ModNum2 = ModNumber!(long, p2);

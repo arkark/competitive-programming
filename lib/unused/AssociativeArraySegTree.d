@@ -2,7 +2,7 @@
 //    - with 1-based associative array
 
 struct DynamicSegTree(T, alias fun, T initValue, bool structly = true)
-  if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
+if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
 
 private:
   alias _fun = binaryFun!fun;
@@ -24,9 +24,9 @@ public:
   }
 
   // O(N)
-  void init(size_t size){
+  void init(size_t size) {
     _size = 1;
-    while(_size < size) {
+    while (_size < size) {
       _size *= 2;
     }
     _l = 0;
@@ -38,10 +38,10 @@ public:
   void update(size_t i, T x) {
     size_t index = i;
     setPair(i += _size, Pair(index, x));
-    while(i > 0) {
+    while (i > 0) {
       i >>= 1;
-      Pair nl = getPair(i*2+0);
-      Pair nr = getPair(i*2+1);
+      Pair nl = getPair(i * 2 + 0);
+      Pair nr = getPair(i * 2 + 1);
       setPair(i, select(nl, nr));
     }
   }
@@ -49,12 +49,12 @@ public:
   // 配列で指定
   // O(N)
   void update(T[] ary) {
-    foreach(i, e; ary) {
-      setPair(i+_size, Pair(i, e));
+    foreach (i, e; ary) {
+      setPair(i + _size, Pair(i, e));
     }
-    foreach_reverse(i; 1.._size) {
-      Pair nl = getPair(i*2+0);
-      Pair nr = getPair(i*2+1);
+    foreach_reverse (i; 1 .. _size) {
+      Pair nl = getPair(i * 2 + 0);
+      Pair nr = getPair(i * 2 + 1);
       setPair(i, select(nl, nr));
     }
   }
@@ -69,10 +69,13 @@ public:
 
   // 区間[a, b)でのクエリ (indexの取得)
   // O(logN)
-  size_t queryIndex(size_t a, size_t b) out(result) {
+  size_t queryIndex(size_t a, size_t b)
+  out (result) {
     // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-    if (structly) assert(result != size_t.max);
-  } body {
+    if (structly)
+      assert(result != size_t.max);
+  }
+  body {
     Pair pair = accumulate(a, b);
     // Pair pair = queryRec(a, b, 0, 0, _size);
     return pair.index;
@@ -80,10 +83,13 @@ public:
 
   // 区間[a, b)でのクエリ ((index, value)の取得)
   // O(logN)
-  Pair queryPair(size_t a, size_t b) out(result) {
+  Pair queryPair(size_t a, size_t b)
+  out (result) {
     // fun == (a, b) => a+b のようなときはindexを聞くとassertion
-    if (structly) assert(result.index != size_t.max);
-  } body {
+    if (structly)
+      assert(result.index != size_t.max);
+  }
+  body {
     Pair pair = accumulate(a, b);
     // Pair pair = queryRec(a, b, 0, 0, _size);
     return pair;
@@ -97,10 +103,13 @@ public:
   // O(N)
   T[] array() {
     return iota(_l, _r).map!(
-      i => i + _size
-    ).map!(
-      i => getPair(i)
-    ).map!"a.value".array;
+        i => i + _size
+    )
+      .map!(
+          i => getPair(i)
+      )
+      .map!"a.value"
+      .array;
   }
 
   struct Pair {
@@ -110,12 +119,15 @@ public:
 
 private:
   Pair accumulate(size_t l, size_t r) {
-    if (r<=_l || _r<=l) return Pair(size_t.max, initValue);
+    if (r <= _l || _r <= l)
+      return Pair(size_t.max, initValue);
     Pair accl = Pair(size_t.max, initValue);
     Pair accr = Pair(size_t.max, initValue);
     for (l += _size, r += _size; l < r; l >>= 1, r >>= 1) {
-      if (l&1) accl = select(accl, getPair(l++));
-      if (r&1) accr = select(getPair(r-1), accr);
+      if (l & 1)
+        accl = select(accl, getPair(l++));
+      if (r & 1)
+        accr = select(getPair(r - 1), accr);
     }
     return select(accl, accr);
   }
@@ -132,7 +144,7 @@ private:
   }
 
   Pair getPair(size_t i) {
-    Pair *p = i in _data;
+    Pair* p = i in _data;
     if (p) {
       return *p;
     } else {

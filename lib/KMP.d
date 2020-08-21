@@ -9,14 +9,14 @@
 //  */
 // long[] solveMp(T)(T[] xs) {
 //   long n = xs.length;
-//   long[] mp = new long[n+1];
+//   long[] mp = new long[n + 1];
 //   long j = -1;
 //   mp[0] = j;
-//   foreach(i; 0..n) {
-//     while(j >= 0 && xs[i] != xs[j]) {
+//   foreach (i; 0 .. n) {
+//     while (j >= 0 && xs[i] != xs[j]) {
 //       j = mp[j];
 //     }
-//     mp[i+1] = ++j;
+//     mp[i + 1] = ++j;
 //   }
 //   return mp;
 // }
@@ -32,17 +32,17 @@
  */
 long[] solveKmp(T)(T[] xs) {
   long n = xs.length;
-  long[] kmp = new long[n+1];
-  long[] mp = new long[n+1];
+  long[] kmp = new long[n + 1];
+  long[] mp = new long[n + 1];
   long j = -1;
   kmp[0] = mp[0] = j;
-  foreach(i; 0..n) {
-    while(j >= 0 && xs[i] != xs[j]) {
+  foreach (i; 0 .. n) {
+    while (j >= 0 && xs[i] != xs[j]) {
       j = kmp[j];
     }
-    kmp[i+1] = mp[i+1] = ++j;
-    if (i+1 < n && xs[i+1] == xs[j]) {
-      kmp[i+1] = kmp[j];
+    kmp[i + 1] = mp[i + 1] = ++j;
+    if (i + 1 < n && xs[i + 1] == xs[j]) {
+      kmp[i + 1] = kmp[j];
     }
   }
   return mp;
@@ -60,16 +60,16 @@ long[] searchPattern(T)(T[] text, T[] pattern) {
   long[] kmp = solveKmp!T(pattern);
   long i = 0; // index for `text`
   long j = 0; // index for `pattern`
-  while(i < n) {
-    while(j >= 0 && text[i] != pattern[j]) {
+  while (i < n) {
+    while (j >= 0 && text[i] != pattern[j]) {
       j = kmp[j];
     }
     j++;
     i++;
     if (j == m) {
       assert(i >= m);
-      indices ~= i-m;
-      j = kmp[j-1];
+      indices ~= i - m;
+      j = kmp[j - 1];
       i--;
     }
   }

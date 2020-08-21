@@ -1,0 +1,10 @@
+{
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": "\\.d$",
+                "cmd": "type dub && dub list | grep dfmt -q && dub run --build=release dfmt -- --inplace --indent_size=2 --brace_style=otbs --template_constraint_style=conditional_newline --keep_line_breaks=true ${file}"
+            }
+        ]
+    }
+}

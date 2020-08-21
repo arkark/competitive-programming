@@ -1,7 +1,8 @@
 @safe unittest {
   import std.random : Random, unpredictableSeed, uniform;
+
   Random rnd = Random(unpredictableSeed);
-  foreach(_; 0..100) {
+  foreach (_; 0 .. 100) {
     long r = uniform(1, 100000L, rnd);
     assert(r.isPrime_simple() == r.isPrime_DeterministicMillerRabinTest());
   }
@@ -26,64 +27,80 @@ long modPow(long base, long power, long mod) @safe pure {
 }
 
 bool isPrime_MillerRabinTest(long n, int k) @safe {
-  if (n == 2) return true;
-  if (n < 2 || !(n&1)) return false;
+  if (n == 2)
+    return true;
+  if (n < 2 || !(n & 1))
+    return false;
 
   import std.random : Random, unpredictableSeed, uniform;
 
-  long d = n-1;
+  long d = n - 1;
   int s = 0;
-  for (; d & 1; d>>=1, s++){}
+  for (; d & 1; d >>= 1, s++) {
+  }
 
   bool flg = true;
   Random rnd = Random(unpredictableSeed);
-  for (int i=0; i<k && flg; i++) {
+  for (int i = 0; i < k && flg; i++) {
     long a = uniform(1, n, rnd);
     long r = modPow(a, d, n);
-    if (r == 1 || r == n-1) continue;
+    if (r == 1 || r == n - 1)
+      continue;
     flg = false;
-    for (int j=0; j<s && !flg; j++) {
+    for (int j = 0; j < s && !flg; j++) {
       r = modPow(r, 2, n);
-      if (r == n-1) flg = true;
+      if (r == n - 1)
+        flg = true;
     }
-    if (!flg) return false;
+    if (!flg)
+      return false;
   }
   return true;
 }
 
 bool isPrime_simple(long n) @safe pure {
-  if (n == 2) return true;
-  if (n < 2 || !(n&1)) return false;
-  for (long i=3; i*i<=n; i+=2) {
-    if (n%i == 0) return false;
+  if (n == 2)
+    return true;
+  if (n < 2 || !(n & 1))
+    return false;
+  for (long i = 3; i * i <= n; i += 2) {
+    if (n % i == 0)
+      return false;
   }
   return true;
 }
 
 // ミラーラビン素数判定法の決定的アルゴリズム版
 bool isPrime_DeterministicMillerRabinTest(long n) @safe pure {
-  if (n == 2) return true;
-  if (n < 2 || !(n&1)) return false;
+  if (n == 2)
+    return true;
+  if (n < 2 || !(n & 1))
+    return false;
 
   import std.math : log;
 
-  long d = n-1;
+  long d = n - 1;
   int s = 0;
-  for (; d & 1; d>>=1, s++){}
+  for (; d & 1; d >>= 1, s++) {
+  }
 
   bool flg = true;
-  real k = 2*(log(n))^^2;
-  if (n-1 < k) k = n-1;
-  for (int i=2; i<=k && flg; i++) {
+  real k = 2 * (log(n)) ^^ 2;
+  if (n - 1 < k)
+    k = n - 1;
+  for (int i = 2; i <= k && flg; i++) {
     long a = i;
     long r = modPow(a, d, n);
-    if (r == 1 || r == n-1) continue;
+    if (r == 1 || r == n - 1)
+      continue;
     flg = false;
-    for (int j=0; j<s && !flg; j++) {
+    for (int j = 0; j < s && !flg; j++) {
       r = modPow(r, 2, n);
-      if (r == n-1) flg = true;
+      if (r == n - 1)
+        flg = true;
     }
-    if (!flg) return false;
+    if (!flg)
+      return false;
   }
   return true;
 }
