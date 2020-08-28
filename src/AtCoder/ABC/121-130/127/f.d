@@ -1,0 +1,389 @@
+import std.stdio;
+import std.string;
+import std.format;
+import std.conv;
+import std.typecons;
+import std.algorithm;
+import std.functional;
+import std.bigint;
+import std.numeric;
+import std.array;
+import std.math;
+import std.range;
+import std.container;
+import std.concurrency;
+import std.traits;
+import std.uni;
+import std.regex;
+import core.bitop : popcnt;
+
+alias Generator = std.concurrency.Generator;
+
+enum long INF = long.max / 5;
+
+void main() {
+  long Q;
+  scanln(Q);
+
+  long T = 1000000000;
+
+  long[long] aa;
+  long[][] xss = new long[][Q];
+  foreach (i; 0 .. Q) {
+    xss[i] = readln.split.to!(long[]);
+    if (xss[i][0] == 1) {
+      aa[xss[i][1]] = -1;
+    }
+  }
+  aa[-T] = -1;
+  aa[T] = -1;
+
+  long[] ys = aa.byKey.array.sort!"a<b".array;
+  foreach (i, y; ys) {
+    aa[y] = i;
+  }
+  long M = ys.length;
+
+  auto seg = SegTree!(
+      long,
+      "a+b",
+      0,
+  )(M);
+  auto seg2 = SegTree!(
+      long,
+      "a+b",
+      0,
+  )(M);
+
+  long sumB = 0;
+
+  long f(long i) {
+    long res = 0;
+
+    long l = seg.query(0, i);
+    long l2 = seg2.query(0, i);
+    res += ys[i] * l - l2;
+
+    long r = seg.query(i + 1, M);
+    long r2 = seg2.query(i + 1, M);
+    res += r2 - ys[i] * r;
+
+    res += sumB;
+
+    return res;
+  }
+
+  foreach (xs; xss) {
+    if (xs[0] == 1) {
+      long a = xs[1];
+      long i = aa[a];
+      seg.update(i, seg.get(i) + 1);
+      seg2.update(i, seg2.get(i) + a);
+      long b = xs[2];
+      sumB += b;
+    } else {
+      long i = 0;
+      foreach_reverse (j; 0 .. 32) {
+        long t = 1L << j;
+        long l = clamp(i - 1, 0, M - 1);
+        long r = clamp(i + 1, 0, M - 1);
+        long fl = f(l);
+        long fr = f(r);
+        if (fl <= fr) {
+          i = clamp(i - t, 0, M - 1);
+        } else {
+          i = clamp(i + t, 0, M - 1);
+        }
+      }
+      long l = clamp(i - 1, 0, M - 1);
+      long r = clamp(i + 1, 0, M - 1);
+      if (f(l) <= f(i)) {
+        i = l;
+      } else if (f(r) < f(i)) {
+        i = r;
+      }
+      writeln(ys[i], " ", f(i));
+    }
+  }
+}
+
+import std.functional;
+
+// // RMQ (Range Minimum Query)
+// alias RMQ(T) = SegTree!(T, "a<b ? a:b", T.max);
+
+// Segment Tree
+//    - with 1-based array
+struct SegTree(T, alias fun, T initValue, bool structly = true)
+if (is(typeof(binaryFun!fun(T.init, T.init)) : T)) {
+
+  import std.algorithm : map;
+  import std.array : array;
+
+private:
+  alias _fun = binaryFun!fun;
+  Pair[] _data;
+  size_t _size;
+  size_t _l, _r;
+
+public:
+
+  // size: データ数
+  this(size_t size) {
+    init(size);
+  }
+
+  // 配列で指定
+  this(T[] xs) {
+    init(xs.length);
+    update(xs);
+  }
+
+  // O(N)
+  void init(size_t size) {
+    _size = 1;
+    while (_size < size) {
+      _size *= 2;
+    }
+    _data.length = _size * 2;
+    _data[] = Pair(size_t.max, initValue);
+    _l = 0;
+    _r = size;
+  }
+
+  // i番目の要素をxに変更
+  // O(logN)
+  void update(size_t i, T x) {
+    size_t index = i;
+    _data[i += _size] = Pair(index, x);
+    while (i > 0) {
+      i >>= 1;
+      Pair nl = _data[i * 2 + 0];
+      Pair nr = _data[i * 2 + 1];
+      _data[i] = select(nl, nr);
+    }
+  }
+
+  // 配列で指定
+  // O(N)
+  void update(T[] ary) {
+    foreach (i, e; ary) {
+      _data[i + _size] = Pair(i, e);
+    }
+    foreach_reverse (i; 1 .. _size) {
+      Pair nl = _data[i * 2 + 0];
+      Pair nr = _data[i * 2 + 1];
+      _data[i] = select(nl, nr);
+    }
+  }
+
+  // 区間[a, b)でのクエリ (valueの取得)
+  // O(logN)
+  T query(size_t a, size_t b) {
+    Pair pair = accumulate(a, b);
+    // Pair pair = queryRec(a, b, 0, 0, _size);
+    return pair.value;
+  }
+
+  // 区間[a, b)でのクエリ (indexの取得)
+  // O(logN)
+  size_t queryIndex(size_t a, size_t b)
+  out (result) {
+    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+    if (structly)
+      assert(result != size_t.max);
+  }
+  body {
+    Pair pair = accumulate(a, b);
+    return pair.index;
+  }
+
+  // 区間[a, b)でのクエリ ((index, value)の取得)
+  // O(logN)
+  Pair queryPair(size_t a, size_t b)
+  out (result) {
+    // fun == (a, b) => a+b のようなときはindexを聞くとassertion
+    if (structly)
+      assert(result.index != size_t.max);
+  }
+  body {
+    Pair pair = accumulate(a, b);
+    // Pair pair = queryRec(a, b, 0, 0, _size);
+    return pair;
+  }
+
+  // O(1)
+  T get(size_t i) {
+    return _data[_size + i].value;
+  }
+
+  // O(N)
+  T[] array() {
+    return _data[_l + _size .. _r + _size].map!"a.value".array;
+  }
+
+private:
+
+  struct Pair {
+    size_t index;
+    T value;
+  }
+
+  Pair select(Pair nl, Pair nr) {
+    T v = _fun(nl.value, nr.value);
+    if (nl.value == v) {
+      return nl;
+    } else if (nr.value == v) {
+      return nr;
+    } else {
+      return Pair(size_t.max, v);
+    }
+  }
+
+  Pair accumulate(size_t l, size_t r) {
+    if (r <= _l || _r <= l)
+      return Pair(size_t.max, initValue);
+    Pair accl = Pair(size_t.max, initValue);
+    Pair accr = Pair(size_t.max, initValue);
+    for (l += _size, r += _size; l < r; l >>= 1, r >>= 1) {
+      if (l & 1)
+        accl = select(accl, _data[l++]);
+      if (r & 1)
+        accr = select(_data[r - 1], accr);
+    }
+    return select(accl, accr);
+  }
+}
+
+// ----------------------------------------------
+
+void times(alias fun)(long n) {
+  // n.iota.each!(i => fun());
+  foreach (i; 0 .. n)
+    fun();
+}
+
+auto rep(alias fun, T = typeof(fun()))(long n) {
+  // return n.iota.map!(i => fun()).array;
+  T[] res = new T[n];
+  foreach (ref e; res)
+    e = fun();
+  return res;
+}
+
+T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+  // `(x+y-1)/y` will only work for positive numbers ...
+  T t = x / y;
+  if (y > 0 && t * y < x)
+    t++;
+  if (y < 0 && t * y > x)
+    t++;
+  return t;
+}
+
+T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+  T t = x / y;
+  if (y > 0 && t * y > x)
+    t--;
+  if (y < 0 && t * y < x)
+    t--;
+  return t;
+}
+
+ref T ch(alias fun, T, S...)(ref T lhs, S rhs) {
+  return lhs = fun(lhs, rhs);
+}
+
+unittest {
+  long x = 1000;
+  x.ch!min(2000);
+  assert(x == 1000);
+  x.ch!min(3, 2, 1);
+  assert(x == 1);
+  x.ch!max(100).ch!min(1000); // clamp
+  assert(x == 100);
+  x.ch!max(0).ch!min(10); // clamp
+  assert(x == 10);
+}
+
+mixin template Constructor() {
+  import std.traits : FieldNameTuple;
+
+  this(Args...)(Args args) {
+    // static foreach(i, v; args) {
+    foreach (i, v; args) {
+      mixin("this." ~ FieldNameTuple!(typeof(this))[i]) = v;
+    }
+  }
+}
+
+template scanln(Args...) {
+  enum sep = " ";
+
+  enum n = () {
+    long n = 0;
+    foreach (Arg; Args) {
+      static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
+        n += Fields!Arg.length;
+      } else {
+        n++;
+      }
+    }
+    return n;
+  }();
+
+  enum fmt = n.rep!(() => "%s").join(sep);
+
+  enum argsString = () {
+    string[] xs = [];
+    foreach (i, Arg; Args) {
+      static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
+        foreach (T; FieldNameTuple!Arg) {
+          xs ~= "&args[%d].%s".format(i, T);
+        }
+      } else {
+        xs ~= "&args[%d]".format(i);
+      }
+    }
+    return xs.join(", ");
+  }();
+
+  void scanln(auto ref Args args) {
+    string line = readln.chomp;
+    static if (__VERSION__ >= 2074) {
+      mixin(
+          "line.formattedRead!fmt(%s);".format(argsString)
+      );
+    } else {
+      mixin(
+          "line.formattedRead(fmt, %s);".format(argsString)
+      );
+    }
+  }
+}
+
+// fold was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+  template fold(fun...) if (fun.length >= 1) {
+    auto fold(R, S...)(R r, S seed) {
+      static if (S.length < 2) {
+        return reduce!fun(seed, r);
+      } else {
+        return reduce!fun(tuple(seed), r);
+      }
+    }
+  }
+}
+
+// popcnt with ulongs was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+  ulong popcnt(ulong x) {
+    x = (x & 0x5555555555555555L) + (x >> 1 & 0x5555555555555555L);
+    x = (x & 0x3333333333333333L) + (x >> 2 & 0x3333333333333333L);
+    x = (x & 0x0f0f0f0f0f0f0f0fL) + (x >> 4 & 0x0f0f0f0f0f0f0f0fL);
+    x = (x & 0x00ff00ff00ff00ffL) + (x >> 8 & 0x00ff00ff00ff00ffL);
+    x = (x & 0x0000ffff0000ffffL) + (x >> 16 & 0x0000ffff0000ffffL);
+    x = (x & 0x00000000ffffffffL) + (x >> 32 & 0x00000000ffffffffL);
+    return x;
+  }
+}

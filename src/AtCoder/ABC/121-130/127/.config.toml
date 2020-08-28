@@ -1,0 +1,3 @@
+command = "rdmd {}.d"
+file_name = "{}.d"
+task_url = "https://atcoder.jp/contests/abc127/tasks/abc127_{}"
