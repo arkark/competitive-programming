@@ -127,6 +127,8 @@ public:
     return typeof(this)(frontData, backData, frontSize, backSize, beginIndex, endIndex, true);
   }
 
+  alias dup = save;
+
   // xs ~= value
   typeof(this) opOpAssign(string op)(T value) if (op == "~") {
     this.insertBack(value);
