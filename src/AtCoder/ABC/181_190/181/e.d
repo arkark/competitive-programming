@@ -1,0 +1,200 @@
+import std.stdio;
+import std.string;
+import std.format;
+import std.conv;
+import std.typecons;
+import std.algorithm;
+import std.functional;
+import std.bigint;
+import std.numeric;
+import std.array;
+import std.math;
+import std.range;
+import std.container;
+import std.concurrency;
+import std.traits;
+import std.uni;
+import std.regex;
+import core.bitop : popcnt;
+
+alias Generator = std.concurrency.Generator;
+
+enum long INF = long.max / 5;
+
+void main() {
+  long N, M;
+  scanln(N, M);
+  long[] hs = readln.split
+    .to!(long[])
+    .sort!"a<b"
+    .array;
+  long[] ws = readln.split
+    .to!(long[])
+    .sort!"a<b"
+    .array;
+  long[] xs = new long[(N + 1) / 2];
+  long[] ys = new long[(N + 1) / 2];
+  foreach (i; 0 .. N / 2) {
+    xs[i + 1] = hs[i * 2 + 1] - hs[i * 2];
+    ys[i] = hs[i * 2 + 2] - hs[i * 2 + 1];
+  }
+  foreach (i; 0 .. N / 2) {
+    xs[i + 1] += xs[i];
+  }
+  foreach_reverse (i; 0 .. N / 2) {
+    ys[i] += ys[i + 1];
+  }
+
+  long ans = INF;
+  foreach (j; 0 .. M) {
+    long l = -1;
+    long r = N;
+    while (r - l > 1) {
+      long c = (l + r) / 2;
+      if (hs[c] < ws[j]) {
+        l = c;
+      } else {
+        r = c;
+      }
+    }
+    if (l % 2 == 0) {
+      ans.ch!min(xs[l / 2] + ys[l / 2] + (ws[j] - hs[l]));
+    } else {
+      ans.ch!min(xs[(l + 1) / 2] + ys[(l + 1) / 2] + (hs[l + 1] - ws[j]));
+    }
+  }
+  ans.writeln;
+}
+
+// ----------------------------------------------
+
+void times(alias fun)(long n) {
+  // n.iota.each!(i => fun());
+  foreach (i; 0 .. n)
+    fun();
+}
+
+auto rep(alias fun, T = typeof(fun()))(long n) {
+  // return n.iota.map!(i => fun()).array;
+  T[] res = new T[n];
+  foreach (ref e; res)
+    e = fun();
+  return res;
+}
+
+T ceil(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+  // `(x+y-1)/y` will only work for positive numbers ...
+  T t = x / y;
+  if (y > 0 && t * y < x)
+    t++;
+  if (y < 0 && t * y > x)
+    t++;
+  return t;
+}
+
+T floor(T)(T x, T y) if (isIntegral!T || is(T == BigInt)) {
+  T t = x / y;
+  if (y > 0 && t * y > x)
+    t--;
+  if (y < 0 && t * y < x)
+    t--;
+  return t;
+}
+
+ref T ch(alias fun, T, S...)(ref T lhs, S rhs) {
+  return lhs = fun(lhs, rhs);
+}
+
+unittest {
+  long x = 1000;
+  x.ch!min(2000);
+  assert(x == 1000);
+  x.ch!min(3, 2, 1);
+  assert(x == 1);
+  x.ch!max(100).ch!min(1000); // clamp
+  assert(x == 100);
+  x.ch!max(0).ch!min(10); // clamp
+  assert(x == 10);
+}
+
+mixin template Constructor() {
+  import std.traits : FieldNameTuple;
+
+  this(Args...)(Args args) {
+    // static foreach(i, v; args) {
+    foreach (i, v; args) {
+      mixin("this." ~ FieldNameTuple!(typeof(this))[i]) = v;
+    }
+  }
+}
+
+template scanln(Args...) {
+  enum sep = " ";
+
+  enum n = () {
+    long n = 0;
+    foreach (Arg; Args) {
+      static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
+        n += Fields!Arg.length;
+      } else {
+        n++;
+      }
+    }
+    return n;
+  }();
+
+  enum fmt = n.rep!(() => "%s").join(sep);
+
+  enum argsString = () {
+    string[] xs = [];
+    foreach (i, Arg; Args) {
+      static if (is(Arg == class) || is(Arg == struct) || is(Arg == union)) {
+        foreach (T; FieldNameTuple!Arg) {
+          xs ~= "&args[%d].%s".format(i, T);
+        }
+      } else {
+        xs ~= "&args[%d]".format(i);
+      }
+    }
+    return xs.join(", ");
+  }();
+
+  void scanln(auto ref Args args) {
+    string line = readln.chomp;
+    static if (__VERSION__ >= 2074) {
+      mixin(
+          "line.formattedRead!fmt(%s);".format(argsString)
+      );
+    } else {
+      mixin(
+          "line.formattedRead(fmt, %s);".format(argsString)
+      );
+    }
+  }
+}
+
+// fold was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+  template fold(fun...) if (fun.length >= 1) {
+    auto fold(R, S...)(R r, S seed) {
+      static if (S.length < 2) {
+        return reduce!fun(seed, r);
+      } else {
+        return reduce!fun(tuple(seed), r);
+      }
+    }
+  }
+}
+
+// popcnt with ulongs was added in D 2.071.0
+static if (__VERSION__ < 2071) {
+  ulong popcnt(ulong x) {
+    x = (x & 0x5555555555555555L) + (x >> 1 & 0x5555555555555555L);
+    x = (x & 0x3333333333333333L) + (x >> 2 & 0x3333333333333333L);
+    x = (x & 0x0f0f0f0f0f0f0f0fL) + (x >> 4 & 0x0f0f0f0f0f0f0f0fL);
+    x = (x & 0x00ff00ff00ff00ffL) + (x >> 8 & 0x00ff00ff00ff00ffL);
+    x = (x & 0x0000ffff0000ffffL) + (x >> 16 & 0x0000ffff0000ffffL);
+    x = (x & 0x00000000ffffffffL) + (x >> 32 & 0x00000000ffffffffL);
+    return x;
+  }
+}
