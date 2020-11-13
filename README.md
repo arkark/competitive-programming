@@ -1,8 +1,8 @@
 
 # A Repository for Competitive Programming
 
-[![Build Status](https://travis-ci.com/ArkArk/competitive-programming.svg?branch=master)](https://travis-ci.com/ArkArk/competitive-programming)
-![Lines of code](https://tokei.rs/b1/github/ArkArk/competitive-programming?category=code)
+[![Build Status](https://travis-ci.com/arkark/competitive-programming.svg?branch=master)](https://travis-ci.com/arkark/competitive-programming)
+![Lines of code](https://tokei.rs/b1/github/arkark/competitive-programming?category=code)
 
 競プロ用リポジトリ
 
@@ -18,7 +18,7 @@
 ## Prepare for a contest
 
 ```terminal
-$ ./compro a b c d e f
+$ ./compro.sh a b c d e f
 Input a contest URL: https://atcoder.jp/contests/agc001
 Created:
 workspace/b.d
