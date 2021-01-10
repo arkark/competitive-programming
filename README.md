@@ -1,7 +1,7 @@
 
 # A Repository for Competitive Programming
 
-[![Build Status](https://travis-ci.com/arkark/competitive-programming.svg?branch=master)](https://travis-ci.com/arkark/competitive-programming)
+[![](https://github.com/arkark/competitive-programming/workflows/D/badge.svg)](https://github.com/arkark/competitive-programming/actions)
 ![Lines of code](https://tokei.rs/b1/github/arkark/competitive-programming?category=code)
 
 競プロ用リポジトリ
