@@ -1,8 +1,0 @@
-language: d
-d:
-  - dmd
-  - dmd-2.091.0 # for AtCoder
-  - dmd-2.070.1 # for old AtCoder
-script:
-  - rdmd -unittest template.d
-  - find lib -name "*.d" | xargs -i sh -c 'echo "Test {}" && rdmd -main -unittest -Jlib {}'

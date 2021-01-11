@@ -1,0 +1,31 @@
+name: D
+
+# Info:
+#   https://atcoder.jp/contests/practice2/rules
+#   AtCoder uses DMD 2.091.0, LDC 1.20.1, and GDC 9.2.1.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-dmd-and-ldc:
+    name: Tests with DMD and LDC
+    strategy:
+      matrix:
+        compiler:
+          - dmd-latest
+          - ldc-latest
+          - dmd-2.091.0 # for AtCoder
+          - ldc-1.20.1 # for AtCoder
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.compiler }}
+      - name: Run unittests for template.d
+        run: rdmd -unittest template.d
+      - name: Run unittests for lib/
+        run: find lib -name "*.d" | xargs -i sh -c 'echo "Test {}" && rdmd -main -unittest -Jlib {}'
