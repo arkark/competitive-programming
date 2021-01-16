@@ -23,6 +23,7 @@ else
 
     printf "%s\n" \
         'command = "rdmd {}.d"'\
+        '# command = "rdmd -m64 -O -release -inline -boundscheck=off {}.d"'\
         'file_name = "{}.d"' \
         "task_url = \"$TASK_URL{}\"" \
         > "$folderName/.config.toml"
