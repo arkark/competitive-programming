@@ -7,9 +7,11 @@ struct Dijkstra(T) {
 
 private:
   Vertex[] vertices;
+  long inf;
 
 public:
   this(size_t size, T inf = T.max) {
+    this.inf = inf;
     vertices.length = size;
     foreach (i; 0 .. size) {
       vertices[i] = new Vertex(i, inf);
@@ -21,7 +23,11 @@ public:
   }
 
   T[] solve(size_t start) {
+    foreach (v; vertices) {
+      v.cost = inf;
+    }
     vertices[start].cost = 0;
+
     auto tree = redBlackTree!(
         "a.cost != b.cost ? a.cost < b.cost : a.index < b.index",
         Vertex,
