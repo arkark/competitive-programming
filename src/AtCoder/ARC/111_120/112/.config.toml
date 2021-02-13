@@ -1,0 +1,4 @@
+command = "rdmd {}.d"
+# command = "rdmd -m64 -O -release -inline -boundscheck=off {}.d"
+file_name = "{}.d"
+task_url = "https://atcoder.jp/contests/arc112/tasks/arc112_{}"
