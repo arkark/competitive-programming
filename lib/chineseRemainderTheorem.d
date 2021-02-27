@@ -31,6 +31,9 @@ body {
 // Solve 連立線形合同式
 // @return x, m:
 //   s.t. ∀i, as[i] * x = bs[i] mod ms[i]
+//        m = lcm(ms[0..$])
+//        0 ≦ x < m
+// このとき、この制約を満たすxはこれしか存在しない
 Tuple!(long, "x", long, "m") chineseRemainderTheorem(long[] as, long[] bs, long[] ms)
 in {
   assert(as.length == bs.length);
