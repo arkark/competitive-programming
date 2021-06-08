@@ -84,7 +84,7 @@ public:
     if (structly)
       assert(result != size_t.max);
   }
-  body {
+  do {
     Pair pair = accumulate(a, b);
     return pair.index;
   }
@@ -97,7 +97,7 @@ public:
     if (structly)
       assert(result.index != size_t.max);
   }
-  body {
+  do {
     Pair pair = accumulate(a, b);
     // Pair pair = queryRec(a, b, 0, 0, _size);
     return pair;

@@ -263,7 +263,7 @@ if (isIntegral!T || isFloatingPoint!T) {
     in {
       assert(!a.center.eq(b.center));
     }
-    body {
+    do {
       double d = dist(a.center, b.center);
 
       if (abs(a.radius - b.radius) > d + EPS)

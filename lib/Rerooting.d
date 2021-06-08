@@ -54,7 +54,7 @@ template Rerooting(
     in {
       assert(rootIndex < size);
     }
-    body {
+    do {
       Vertex[] vs = getOrderedVertices(rootIndex);
 
       foreach_reverse (v; vs) {

@@ -50,7 +50,7 @@ public:
   in {
     assert(_builded);
   }
-  body {
+  do {
     return querySegNode(x, y).index;
   }
 
@@ -60,7 +60,7 @@ public:
   in {
     assert(_builded);
   }
-  body {
+  do {
     return querySegNode(x, y).depth;
   }
 
@@ -70,7 +70,7 @@ public:
   in {
     assert(_builded);
   }
-  body {
+  do {
     return _segT.get(_vertices[x].firstId).depth;
   }
 

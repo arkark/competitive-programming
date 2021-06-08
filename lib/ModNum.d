@@ -66,7 +66,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
   in {
     debug assert(isPrime(mod));
   }
-  body {
+  do {
     if (x.value == 0) {
       throw new Exception("divide by 0");
     }
@@ -228,7 +228,7 @@ struct ModNumber(T, T mod) if (__traits(isIntegral, T)) {
         assert(0 <= n && n <= LUCAS_SIZE);
         assert(0 <= r && r <= LUCAS_SIZE);
       }
-      body {
+      do {
         static ModNumber[][] memo;
         if (memo.length == 0) {
           memo = new ModNumber[][](LUCAS_SIZE + 1, LUCAS_SIZE + 1);

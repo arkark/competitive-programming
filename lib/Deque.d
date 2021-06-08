@@ -39,7 +39,7 @@ public:
   in {
     assert(!empty, "Attempting to get the front of an empty Deque");
   }
-  body {
+  do {
     return this[0];
   }
 
@@ -47,7 +47,7 @@ public:
   in {
     assert(!empty, "Attempting to assign to the front of an empty Deque");
   }
-  body {
+  do {
     return this[0] = value;
   }
 
@@ -55,7 +55,7 @@ public:
   in {
     assert(!empty, "Attempting to get the back of an empty Deque");
   }
-  body {
+  do {
     return this[$ - 1];
   }
 
@@ -63,7 +63,7 @@ public:
   in {
     assert(!empty, "Attempting to assign to the back of an empty Deque");
   }
-  body {
+  do {
     return this[$ - 1] = value;
   }
 
@@ -95,7 +95,7 @@ public:
   in {
     assert(!empty, "Attempting to remove the front of an empty Deque");
   }
-  body {
+  do {
     if (beginIndex >= 0) {
       // do nothing
     } else {
@@ -111,7 +111,7 @@ public:
   in {
     assert(!empty, "Attempting to remove the back of an empty Deque");
   }
-  body {
+  do {
     if (endIndex <= 0) {
       // do nothing
     } else {
@@ -140,7 +140,7 @@ public:
   in {
     assert(0 <= index && index < length, "Access violation");
   }
-  body {
+  do {
     ptrdiff_t _index = beginIndex + (cast(ptrdiff_t) index);
     return _index >= 0 ? backData[_index] : frontData[-_index - 1];
   }
@@ -150,7 +150,7 @@ public:
   in {
     assert(0 <= indices[0] && indices[1] <= length, "Access violation");
   }
-  body {
+  do {
     ptrdiff_t newBeginIndex = beginIndex + cast(ptrdiff_t) indices[0];
     ptrdiff_t newEndIndex = beginIndex + cast(ptrdiff_t) indices[1];
     size_t newFrontSize = clamp(-newBeginIndex, 0, frontSize);
@@ -168,7 +168,7 @@ public:
   in {
     assert(0 <= index && index < length, "Access violation");
   }
-  body {
+  do {
     ptrdiff_t _index = (cast(ptrdiff_t) index) - beginIndex;
     return (_index >= 0 ? backData[_index] : frontData[-_index - 1]) = value;
   }
@@ -178,7 +178,7 @@ public:
   in {
     assert(0 <= indices[0] && indices[1] <= length, "Access violation");
   }
-  body {
+  do {
     ptrdiff_t _beginIndex = beginIndex + (cast(ptrdiff_t) indices[0]);
     ptrdiff_t _endIndex = beginIndex + (cast(ptrdiff_t) indices[1]);
     frontData[clamp(-_endIndex, 0, frontSize) .. clamp(-_beginIndex, 0, frontSize)] = value;
@@ -198,7 +198,7 @@ public:
   in {
     assert(0 <= indices[0] && indices[1] <= length, "Access violation");
   }
-  body {
+  do {
     ptrdiff_t _beginIndex = beginIndex + (cast(ptrdiff_t) indices[0]);
     ptrdiff_t _endIndex = beginIndex + (cast(ptrdiff_t) indices[1]);
     mixin(q{
@@ -231,7 +231,7 @@ public:
   in {
     assert(0 <= i && j <= length, "Access violation");
   }
-  body {
+  do {
     return [i, j];
   }
 

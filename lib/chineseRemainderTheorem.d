@@ -22,7 +22,7 @@ long inverseMod(long a, long m)
 in {
   assert(gcd(a, m) == 1);
 }
-body {
+do {
   long x, y;
   extgcd(a, m, x, y);
   return (x % m + m) % m;
@@ -39,7 +39,7 @@ in {
   assert(as.length == bs.length);
   assert(as.length == ms.length);
 }
-body {
+do {
   auto result = tuple!("x", "m")(0L, 1L);
   foreach (i; 0 .. as.length) {
     long s = as[i] * result.m;

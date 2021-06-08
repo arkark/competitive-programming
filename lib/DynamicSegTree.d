@@ -45,7 +45,7 @@ public:
     if (structly)
       assert(result != size_t.max);
   }
-  body {
+  do {
     return queryPair(a, b, _root, 0, _size).index;
   }
 
@@ -57,7 +57,7 @@ public:
     if (structly)
       assert(result.index != size_t.max);
   }
-  body {
+  do {
     return queryPair(a, b, _root, 0, _size);
   }
 

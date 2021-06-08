@@ -6,7 +6,7 @@ if (is(typeof(binaryFun!fun(T.init, T.init)) == bool))
 in {
   assert(k > 0);
 }
-body {
+do {
   size_t n = xs.length;
   size_t[] deq = new size_t[n];
   size_t l = 0, r = 0;
@@ -59,7 +59,7 @@ body {
 // in {
 //   assert(k > 0);
 // }
-// body {
+// do {
 //   size_t n = xs.length;
 //   size_t[] deq = new size_t[n];
 //   size_t l = 0, r = 0;

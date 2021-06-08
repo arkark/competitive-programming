@@ -6,7 +6,7 @@ in {
 
   assert(xs.all!"a>=0");
 }
-body {
+do {
   import std.conv : to;
   import std.algorithm : sort;
   import std.array : array;
